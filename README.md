@@ -10,13 +10,13 @@
 &nbsp;
 [![Institution](https://img.shields.io/badge/DLSU-De%20La%20Salle%20University-005A36?style=flat-square)](https://www.dlsu.edu.ph/)
 
-<p>Individual academic submission hub for <strong>GAMEDEV S01</strong> at De La Salle University.</p>
+<p>Individual academic submission hub for <strong>GAMEDEV S01</strong>.</p>
 
 </div>
 
 ---
 
-<h2 align="center"><img src="https://raw.githubusercontent.com/ainere/ainere/main/assets/icons/user.svg" width="20" height="20" align="absmiddle" /> submission manifest</h2>
+<h2 align="center"><img src="https://raw.githubusercontent.com/ainere/ainere/main/assets/icons/user.svg" width="20" height="20" align="absmiddle" /> submission manifest.ini</h2>
 
 ```ini
 [Submission_Manifest]
@@ -39,7 +39,7 @@ Outputs       = Refer to branches for specific outputs
 
 | Output / Topic | Target Branch | Description | Link |
 | :--- | :--- | :--- | :--- |
-| **Gummi Ship** | `gummi-ship` | Unity Gummi Ship project files and materials | [View Output →](https://github.com/ainere/GAMEDEV/tree/gummi-ship) |
+| **Prototyping 1: Go Go Gummi!** | `gummi-ship` | Unity Gummi Ship project files and materials | [View Output →](https://github.com/ainere/GAMEDEV/tree/gummi-ship) |
 
 ---
 
