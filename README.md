@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎮 GAMEDEV — Course Submissions
+# GAMEDEV — Course Submissions
 
 [![Course](https://img.shields.io/badge/Course-GAMEDEV%20S01-007ACC?style=flat-square&logo=visual-studio-code&logoColor=white)](https://github.com/ainere/GAMEDEV)
 &nbsp;
