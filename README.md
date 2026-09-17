@@ -8,7 +8,6 @@
 &nbsp;
 [![ID](https://img.shields.io/badge/ID-12413739-blueviolet?style=flat-square)](https://github.com/ainere)
 &nbsp;
-[![Institution](https://img.shields.io/badge/DLSU-De%20La%20Salle%20University-005A36?style=flat-square)](https://www.dlsu.edu.ph/)
 
 <p>Individual academic submission hub for <strong>GAMEDEV S01</strong>.</p>
 
