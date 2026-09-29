@@ -1,0 +1,7 @@
+{
+    "name": "Traversal.Runtime",
+    "rootNamespace": "Traversal",
+    "references": [
+        "Unity.InputSystem"
+    ]
+}
