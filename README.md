@@ -5,7 +5,11 @@ A short survival game seen through a fixed CCTV camera. Dodge changing laser pat
 
 ## Gameplay video
 
-[Gameplay presentation and demo (MP4)](Videos/Laser-Room-Demo.mp4)
+[Compressed gameplay presentation and demo (MP4, 88 MiB)](Demo/LaserRoom-demo.mp4)
+
+The compressed copy is 1080p at 30 fps and is stored directly in Git.
+
+[Original gameplay presentation and demo (MP4)](Videos/Laser-Room-Demo.mp4)
 
 The original 1080p recording runs for about 13 minutes and is stored with Git LFS. Download it from the linked file page. Cloning the recording requires Git LFS.
 
