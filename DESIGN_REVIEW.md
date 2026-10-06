@@ -20,6 +20,5 @@ Healing, shields and temporary slowdowns give players reasons to read the floor 
 
 - [Gameplay and project map](README.md)
 - [Asset sources and licenses](ASSET_CREDITS.md)
-- [Verification results](VERIFICATION.md)
 - Pattern selection and safety checks: `Assets/LaserCorridor/Runtime/LaserDirector.cs`, `PatternLibrary.cs` and `SafetyValidator.cs`
 - Floor and run rules: `Assets/LaserCorridor/Runtime/PanelDirector.cs` and `RunModel.cs`

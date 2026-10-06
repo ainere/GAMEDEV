@@ -3,16 +3,6 @@
 
 A short survival game seen through a fixed CCTV camera. Dodge changing laser patterns for 90 seconds, read the floor lights to choose useful panels and avoid traps, then cross the exit after its blue grid shuts down.
 
-## Gameplay video
-
-[Compressed gameplay presentation and demo (MP4, 88 MiB)](Demo/LaserRoom-demo.mp4)
-
-The compressed copy is 1080p at 30 fps and is stored directly in Git.
-
-[Original gameplay presentation and demo (MP4)](Videos/Laser-Room-Demo.mp4)
-
-The original 1080p recording runs for about 13 minutes and is stored with Git LFS. Download it from the linked file page. Cloning the recording requires Git LFS.
-
 ## Play
 
 1. Clone the `laser-room` branch:
@@ -47,17 +37,9 @@ The branch contains the editable Unity project. It does not include a standalone
 | `Assets/LaserCorridor/Scenes/LaserCorridor.unity` | Playable scene |
 | `Assets/LaserCorridor/Runtime/` | Run, player, laser, floor-panel, camera, audio and HUD logic |
 | `Assets/LaserCorridor/Data/` | Run settings, effects and authored laser patterns |
-| `Assets/LaserCorridor/Tests/EditMode/` | Automated gameplay, geometry and schedule tests |
 | `ASSET_CREDITS.md` | Asset sources, licenses and visual reference |
 | `ASSET_INVENTORY.csv` | Retained source-file paths and SHA-256 hashes |
 | `DESIGN_REVIEW.md` | Design rationale |
-| `VERIFICATION.md` | Test results and verification limits |
-
-## Verification
-
-The retained Edit Mode suite has **36 passing tests**, including 10,000 seeded safety checks covering all 64 laser designs and 128 mirrored layouts. Live selection checks reached all four opening families and all 48 advanced family/variant combinations. Run the suite through Unity's Test Runner.
-
-A muted automated HUD check passed five states at 720p, 1080p and ultrawide resolutions. The reviewed captures isolate the HUD; human difficulty, audible output and hardware performance were not measured. See [VERIFICATION.md](VERIFICATION.md) for the scope and results.
 
 ## References
 
@@ -67,7 +49,6 @@ A muted automated HUD check passed five states at 720p, 1080p and ultrawide reso
 | [Unity Input System 1.19 manual](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.19/manual/index.html) | Keyboard input |
 | [Unity UI (uGUI) 2.6 manual](https://docs.unity3d.com/Packages/com.unity.ugui@2.6/manual/index.html) | In-game interface |
 | [Universal Render Pipeline manual](https://docs.unity3d.com/6000.6/Documentation/Manual/urp/urp-introduction.html) | Scene rendering |
-| [Unity Test Framework 1.8 manual](https://docs.unity3d.com/Packages/com.unity.test-framework@1.8/manual/index.html) | Edit Mode regression tests |
 | [Quaternius Universal Animation Library](https://quaternius.itch.io/universal-animation-library) | Character model and animation source |
 | [Kenney Sci-fi Sounds](https://kenney.nl/assets/sci-fi-sounds) | Ambient and gameplay sound source |
 | [Kenney Space Station Kit](https://kenney.nl/assets/space-station-kit) | License and provenance retained; its content is not used |
