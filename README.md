@@ -3,6 +3,12 @@
 
 A short survival game seen through a fixed CCTV camera. Dodge changing laser patterns for 90 seconds, read the floor lights to choose useful panels and avoid traps, then cross the exit after its blue grid shuts down.
 
+## Gameplay video
+
+[Gameplay presentation and demo (MP4)](Videos/Laser-Room-Demo.mp4)
+
+The original 1080p recording runs for about 13 minutes and is stored with Git LFS. Download it from the linked file page. Cloning the recording requires Git LFS.
+
 ## Play
 
 1. Clone the `laser-room` branch:
