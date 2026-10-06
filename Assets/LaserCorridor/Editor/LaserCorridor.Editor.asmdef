@@ -1,0 +1,6 @@
+{
+  "name":"LaserCorridor.Editor",
+  "rootNamespace":"LaserCorridor.Editor",
+  "references":["LaserCorridor.Runtime","Unity.InputSystem","Unity.ugui","Unity.TextMeshPro","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime"],
+  "includePlatforms":["Editor"]
+}

@@ -1,0 +1,1 @@
+{"name":"LaserCorridor.Runtime","rootNamespace":"LaserCorridor","references":["Unity.InputSystem","Unity.ugui","Unity.TextMeshPro","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime"],"autoReferenced":true}

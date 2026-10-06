@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 247549597ad74a444a5d9f2818c89528, type: 3}
+  m_Name: RunSettings
+  m_EditorClassIdentifier: LaserCorridor.Runtime::LaserCorridor.RunSettings
+  duration: 90
+  corridorLength: 14
+  corridorWidth: 4
+  corridorHeight: 4.2
+  walkSpeed: 4.5
+  crouchSpeed: 3
+  jumpHeight: 1.1
+  gravity: 18
+  standingHeight: 1.8
+  crouchingHeight: 1
+  playerRadius: 0.3
+  gateZ: 12
+  emitterZ: 13.35
+  minimumZ: 1
+  maximumHealth: 100
+  laserDamage: 25
+  healAmount: 25
+  shockDamage: 15
+  damageGrace: 0.75
+  shieldDuration: 10
+  laserSlowDuration: 5
+  movementSlowDuration: 4
+  slowMultiplier: 0.65
+  panelCycle: 9
+  panelRamp: 2
+  panelActive: 6
+  effectCooldown: 24
+  pickupCooldown: 6
+  encounterLead: 1.75
+  reactionAllowance: 0.35
+  burstRecovery: 0.75
+  waveSpeeds:
+  - 3.5
+  - 4.5
+  - 5.5
+  - 7
+  beamRadius: 0.045
+  safetyMargin: 0.08
+  tilePitch: 0.8
+  tileSeam: 0.03
+  minimumWaveSpeed: 3.5
+  maximumWaveSpeed: 7
+  advancedPatternsAfter: 6
+  patternUnlockDuration: 32
+  patternRampDuration: 70
+  pairedBurstsAfter: 14
+  tripleBurstsAfter: 42
+  minimumLaneChange: 0.55
+  patternPlanAttempts: 12
+  patternHistoryLength: 6
