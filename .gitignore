@@ -25,3 +25,7 @@ sysinfo.txt
 crashlytics-build.properties
 
 [Tt]est[Rr]esults/
+
+Assets/Tests/
+Assets/Tests.meta
+TECHNICAL_WALKTHROUGH.md

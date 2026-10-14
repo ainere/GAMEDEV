@@ -27,7 +27,7 @@ MonoBehaviour:
     linkText: 
     url: 
   - heading: Modes
-    text: Static balloons stay in place. Moving rows cross the booth in alternating directions and bob vertically. Each balloon awards 10 points and respawns after 0.75 seconds during the 60-second round.
+    text: Static cutouts fold down and stand back up in place. Moving targets travel on three conveyor rows and reset only behind the side covers. Each knockdown earns 10 points during a 60-second round.
     linkText: Course submissions
     url: https://github.com/ainere/GAMEDEV/tree/main
   loadedLayout: 1

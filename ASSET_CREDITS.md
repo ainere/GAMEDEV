@@ -2,7 +2,18 @@
 
 ## Original project assets
 
-Knockdown's balloon and dart models, booth geometry, materials, interface, particles, and pop, throw, and bell audio are part of this project. The game uses original designs inspired by colorful carnival balloon games.
+Knockdown's dart model, booth geometry, cardboard thickness, hinges, conveyor shelves, materials, interface, impact dust, and throw and bell audio are part of this project.
+
+## Kenney Shooting Gallery 1.0
+
+- Creator: Kenney
+- Source: [Shooting Gallery](https://kenney.nl/assets/shooting-gallery)
+- Author-uploaded archive: [OpenGameArt](https://opengameart.org/content/shooting-gallery)
+- Licence: Creative Commons Zero (CC0)
+- Imported artwork: `duck_outline_target_yellow.png`, `duck_outline_target_white.png`, and `duck_outline_target_brown.png`
+- Included licence: [Shooting Gallery licence](Assets/Art/External/KenneyShootingGallery/License.txt)
+
+These transparent PNGs supply the three duck cutout faces. Their silhouettes also define the cardboard meshes and hitboxes.
 
 ## Kenney Coaster Kit 1.0
 

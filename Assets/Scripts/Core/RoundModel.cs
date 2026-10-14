@@ -25,7 +25,7 @@ namespace Knockdown
         public float RoundSeconds = 60f;
         public float ResolutionSeconds = 0.5f;
         public float ShotInterval = 0.30f;
-        public int PointsPerPop = 10;
+        public int PointsPerHit = 10;
     }
 
     /// <summary>
@@ -37,13 +37,13 @@ namespace Knockdown
         private const float DefaultRoundSeconds = 60f;
         private const float DefaultResolutionSeconds = 0.5f;
         private const float DefaultShotInterval = 0.30f;
-        private const int DefaultPointsPerPop = 10;
+        private const int DefaultPointsPerHit = 10;
 
         private readonly float _countdownSeconds;
         private readonly float _roundSeconds;
         private readonly float _resolutionSeconds;
         private readonly float _shotInterval;
-        private readonly int _pointsPerPop;
+        private readonly int _pointsPerHit;
         private readonly HashSet<int> _outstandingShots = new HashSet<int>();
 
         private float _countdownRemaining;
@@ -60,7 +60,7 @@ namespace Knockdown
             _roundSeconds = ValidPositive(settings.RoundSeconds, DefaultRoundSeconds);
             _resolutionSeconds = ValidNonNegative(settings.ResolutionSeconds, DefaultResolutionSeconds);
             _shotInterval = ValidPositive(settings.ShotInterval, DefaultShotInterval);
-            _pointsPerPop = settings.PointsPerPop >= 0 ? settings.PointsPerPop : DefaultPointsPerPop;
+            _pointsPerHit = settings.PointsPerHit >= 0 ? settings.PointsPerHit : DefaultPointsPerHit;
 
             SecondsRemaining = _roundSeconds;
         }
@@ -72,9 +72,9 @@ namespace Knockdown
         public float CountdownRemaining => Phase == RoundPhase.Countdown ? _countdownRemaining : 0f;
         public float ElapsedPlaySeconds => _elapsedPlaySeconds;
         public int Shots { get; private set; }
-        public int Pops { get; private set; }
+        public int Knockdowns { get; private set; }
         public int Score { get; private set; }
-        public float Accuracy => Shots == 0 ? 0f : (float)Pops / Shots;
+        public float Accuracy => Shots == 0 ? 0f : (float)Knockdowns / Shots;
 
         public event Action Changed;
 
@@ -214,21 +214,21 @@ namespace Knockdown
         }
 
         /// <summary>
-        /// Resolves a previously fired shot once. Only a popped target adds score.
+        /// Resolves a previously fired shot once. Only a knocked-down target adds score.
         /// </summary>
-        public bool ResolveShot(int shotId, bool popped)
+        public bool ResolveShot(int shotId, bool knockedDown)
         {
             if (IsPaused || (Phase != RoundPhase.Playing && Phase != RoundPhase.Resolving))
                 return false;
             if (!_outstandingShots.Remove(shotId))
                 return false;
 
-            if (popped)
+            if (knockedDown)
             {
-                Pops++;
-                Score = Score > int.MaxValue - _pointsPerPop
+                Knockdowns++;
+                Score = Score > int.MaxValue - _pointsPerHit
                     ? int.MaxValue
-                    : Score + _pointsPerPop;
+                    : Score + _pointsPerHit;
             }
 
             NotifyChanged();
@@ -252,7 +252,7 @@ namespace Knockdown
             _hasFiredThisRound = false;
             SecondsRemaining = _roundSeconds;
             Shots = 0;
-            Pops = 0;
+            Knockdowns = 0;
             Score = 0;
             _outstandingShots.Clear();
             Phase = phase;

@@ -60,8 +60,8 @@ namespace Knockdown
             staticButtonImage.GetComponentInChildren<TMP_Text>().color = model.Mode == GameMode.Static ? _navy : _cream;
             movingButtonImage.GetComponentInChildren<TMP_Text>().color = model.Mode == GameMode.Moving ? _navy : _cream;
             readyDescription.text = model.Mode == GameMode.Static
-                ? "Static balloons. Find your rhythm."
-                : "Moving balloons. Give your darts a little lead.";
+                ? "Knock them down. They'll stand up again."
+                : "Lead your shots. Targets reset behind the covers.";
             readyPanel.SetActive(model.Phase == RoundPhase.Ready && !model.IsPaused);
             countdownPanel.SetActive(model.Phase == RoundPhase.Countdown && !model.IsPaused);
             pausePanel.SetActive(model.IsPaused);
@@ -70,7 +70,7 @@ namespace Knockdown
             pauseButton.SetActive(model.Phase == RoundPhase.Playing || model.Phase == RoundPhase.Countdown || model.Phase == RoundPhase.Resolving);
             countdownText.SetText("{0:0}", Mathf.Ceil(model.CountdownRemaining));
             resultScore.SetText("{0:0}", model.Score);
-            resultDetails.text = model.Pops + " popped     /     " + Mathf.RoundToInt(model.Accuracy * 100) + "% accuracy";
+            resultDetails.text = model.Knockdowns + " knocked down     /     " + Mathf.RoundToInt(model.Accuracy * 100) + "% accuracy";
             if (model.Phase == RoundPhase.Results)
             {
                 if (model.Mode == GameMode.Static) _staticBest = Mathf.Max(_staticBest, model.Score);

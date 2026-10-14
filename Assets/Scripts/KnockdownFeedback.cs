@@ -1,14 +1,15 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Knockdown
 {
     public sealed class KnockdownFeedback : MonoBehaviour
     {
-        [SerializeField] private ParticleSystem popPrefab;
-        [SerializeField] private KnockdownPopLabel labelPrefab;
-        [SerializeField] private AudioClip popClip;
+        [SerializeField, FormerlySerializedAs("popPrefab")] private ParticleSystem impactPrefab;
+        [SerializeField] private KnockdownScoreLabel labelPrefab;
+        [SerializeField, FormerlySerializedAs("popClip")] private AudioClip hitClip;
         [SerializeField] private AudioClip throwClip;
         [SerializeField] private AudioClip bellClip;
         [SerializeField] private AudioClip[] missClips;
@@ -16,10 +17,10 @@ namespace Knockdown
         private int _nextVoice;
         private readonly List<GameObject> _effects = new List<GameObject>();
 
-        public void Configure(ParticleSystem particles, KnockdownPopLabel label, AudioClip pop, AudioClip launch,
+        public void Configure(ParticleSystem particles, KnockdownScoreLabel label, AudioClip hit, AudioClip launch,
             AudioClip bell, AudioClip[] misses, AudioSource[] sources)
         {
-            popPrefab = particles; labelPrefab = label; popClip = pop; throwClip = launch;
+            impactPrefab = particles; labelPrefab = label; hitClip = hit; throwClip = launch;
             bellClip = bell; missClips = misses; voices = sources;
         }
 
@@ -40,15 +41,21 @@ namespace Knockdown
                 Play(missClips[Random.Range(0, missClips.Length)], 0.15f, Random.Range(0.95f, 1.05f));
         }
 
-        public void Pop(Vector3 position, Camera camera)
+        public void Hit(Vector3 position, Camera camera)
         {
-            Play(popClip, 0.45f, Random.Range(0.94f, 1.08f));
-            var particles = Instantiate(popPrefab, position, Quaternion.identity);
-            particles.Play();
-            _effects.Add(particles.gameObject);
-            Destroy(particles.gameObject, 0.8f);
-            var label = Instantiate(labelPrefab, position + new Vector3(0, 0.12f, -0.55f), camera.transform.rotation);
-            _effects.Add(label.gameObject);
+            Play(hitClip, 0.32f, Random.Range(0.94f, 1.08f));
+            if (impactPrefab != null)
+            {
+                var particles = Instantiate(impactPrefab, position, Quaternion.identity);
+                particles.Play();
+                _effects.Add(particles.gameObject);
+                Destroy(particles.gameObject, 0.8f);
+            }
+            if (labelPrefab != null)
+            {
+                var label = Instantiate(labelPrefab, position + new Vector3(0, 0.12f, -0.25f), camera.transform.rotation);
+                _effects.Add(label.gameObject);
+            }
             _effects.RemoveAll(item => item == null);
         }
 

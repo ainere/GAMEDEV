@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace Knockdown
 {
@@ -9,16 +10,18 @@ namespace Knockdown
     {
         [SerializeField] private RoundSettings settings = new RoundSettings();
         [SerializeField] private Camera gameplayCamera;
-        [SerializeField] private KnockdownBalloon[] balloons;
+        [SerializeField, FormerlySerializedAs("balloons")] private KnockdownTarget[] targets;
         [SerializeField] private KnockdownDart dartPrefab;
         [SerializeField] private KnockdownHud hud;
         [SerializeField] private KnockdownFeedback feedback;
         [SerializeField] private float aimPlaneZ = 3f;
+        [SerializeField, Min(5.2f)] private float maxDartTravelZ = 5.2f;
         [SerializeField, Min(1f)] private float launchSpeed = 28f;
         [SerializeField] private Vector2 aimXBounds = new Vector2(-4.8f, 4.8f);
         [SerializeField] private Vector2 aimYBounds = new Vector2(0.65f, 4.85f);
         private readonly HashSet<KnockdownDart> _darts = new HashSet<KnockdownDart>();
         private readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>();
+        private readonly RaycastHit[] _aimHits = new RaycastHit[64];
         private EventSystem _pointerEventSystem;
         private PointerEventData _uiPointerData;
         private RoundPhase _previousPhase;
@@ -30,16 +33,17 @@ namespace Knockdown
 
         public RoundModel Model => _model;
         public Camera GameplayCamera => gameplayCamera;
-        public IReadOnlyList<KnockdownBalloon> Balloons => balloons;
+        public IReadOnlyList<KnockdownTarget> Targets => targets;
         public float AimPlaneZ => aimPlaneZ;
+        public float MaxDartTravelZ => maxDartTravelZ;
         public int ActiveProjectileCount => _darts.Count;
         public bool IsMouseLookActive => _model != null && _model.Phase == RoundPhase.Playing && !_model.IsPaused;
 
-        public void Configure(Camera camera, KnockdownBalloon[] targets, KnockdownDart dart,
+        public void Configure(Camera camera, KnockdownTarget[] configuredTargets, KnockdownDart dart,
             KnockdownHud interfaceView, KnockdownFeedback effects)
         {
             gameplayCamera = camera;
-            balloons = targets;
+            targets = configuredTargets;
             dartPrefab = dart;
             hud = interfaceView;
             feedback = effects;
@@ -50,7 +54,7 @@ namespace Knockdown
             _cameraFraming = gameplayCamera.GetComponent<KnockdownCameraFraming>();
             _model = new RoundModel(settings);
             _previousPhase = _model.Phase;
-            foreach (var balloon in balloons) balloon.Initialize(this);
+            foreach (var target in targets) target.Initialize(this);
             hud.Bind(this);
             _model.Changed += OnModelChanged;
             ResetTargets();
@@ -65,8 +69,9 @@ namespace Knockdown
             }
 
             _model.Tick(Time.deltaTime);
-            foreach (var balloon in balloons)
-                balloon.TickRespawn(Time.deltaTime, _model.Phase == RoundPhase.Playing && !_model.IsPaused);
+            var allowStandUp = _model.Phase == RoundPhase.Playing && !_model.IsPaused;
+            foreach (var target in targets)
+                target.TickRespawn(Time.deltaTime, allowStandUp);
 
             var mouse = Mouse.current;
             var interactive = IsMouseLookActive;
@@ -109,8 +114,8 @@ namespace Knockdown
         private void FixedUpdate()
         {
             if (_model == null || _model.IsPaused) return;
-            foreach (var balloon in balloons)
-                balloon.Move(_model.Mode, _model.ElapsedPlaySeconds);
+            foreach (var target in targets)
+                target.Move(_model.Mode, _model.ElapsedPlaySeconds);
         }
 
         public bool TryGetAim(Vector2 screenPosition, out Vector3 point)
@@ -127,10 +132,54 @@ namespace Knockdown
         private bool TryGetAim(Ray ray, out Vector3 point)
         {
             point = default;
-            var plane = new Plane(Vector3.back, new Vector3(0, 0, aimPlaneZ));
-            if (!plane.Raycast(ray, out var distance)) return false;
-            point = ray.GetPoint(distance);
+            if (TryGetTargetFaceHit(ray, out var targetHit))
+            {
+                point = targetHit.point;
+            }
+            else
+            {
+                var plane = new Plane(Vector3.back, new Vector3(0, 0, aimPlaneZ));
+                if (!plane.Raycast(ray, out var distance)) return false;
+                point = ray.GetPoint(distance);
+            }
+
             return point.x >= aimXBounds.x && point.x <= aimXBounds.y && point.y >= aimYBounds.x && point.y <= aimYBounds.y;
+        }
+
+        private bool TryGetTargetFaceHit(Ray ray, out RaycastHit closestHit)
+        {
+            closestHit = default;
+            var closestDistance = float.PositiveInfinity;
+            var hitCount = Physics.RaycastNonAlloc(ray, _aimHits, Mathf.Infinity,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            for (var hitIndex = 0; hitIndex < hitCount; hitIndex++)
+            {
+                var hit = _aimHits[hitIndex];
+                if (hit.distance >= closestDistance)
+                    continue;
+
+                foreach (var target in targets)
+                {
+                    if (target == null || !target.IsAvailable || target.IsDown)
+                        continue;
+
+                    var faces = target.FaceColliders;
+                    if (faces == null)
+                        continue;
+
+                    for (var faceIndex = 0; faceIndex < faces.Count; faceIndex++)
+                    {
+                        if (faces[faceIndex] != hit.collider)
+                            continue;
+
+                        closestDistance = hit.distance;
+                        closestHit = hit;
+                        break;
+                    }
+                }
+            }
+
+            return !float.IsPositiveInfinity(closestDistance);
         }
 
         // Launch a physical dart toward an in-bounds point on the target plane.
@@ -154,14 +203,14 @@ namespace Knockdown
             !float.IsNaN(point.y) && !float.IsInfinity(point.y) &&
             !float.IsNaN(point.z) && !float.IsInfinity(point.z);
 
-        internal void ResolveDart(KnockdownDart dart, KnockdownBalloon balloon, Vector3 position)
+        internal void ResolveDart(KnockdownDart dart, KnockdownTarget target, Vector3 position)
         {
             if (!_darts.Remove(dart)) return;
             var canScore = !_model.IsPaused && (_model.Phase == RoundPhase.Playing || _model.Phase == RoundPhase.Resolving);
-            var popped = canScore && balloon != null && balloon.TryPop();
-            if (_model.ResolveShot(dart.ShotId, popped))
+            var knockedDown = canScore && target != null && target.TryKnockDown();
+            if (_model.ResolveShot(dart.ShotId, knockedDown))
             {
-                if (popped) { feedback.Pop(balloon.transform.position, gameplayCamera); hud.PulseScore(); }
+                if (knockedDown) { feedback.Hit(position, gameplayCamera); hud.PulseScore(); }
                 else feedback.Miss(position);
             }
         }
@@ -239,7 +288,7 @@ namespace Knockdown
 
         private void ResetTargets()
         {
-            foreach (var balloon in balloons) balloon.ResetTarget(_model.Mode);
+            foreach (var target in targets) target.ResetTarget(_model.Mode);
         }
 
         private void ClearDarts()

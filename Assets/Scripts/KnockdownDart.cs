@@ -24,23 +24,23 @@ namespace Knockdown
         {
             if (_controller == null || _resolved) return;
             _age += Time.deltaTime;
-            if (_age >= 1.1f || transform.position.z > _controller.AimPlaneZ + 0.7f)
+            if (_age >= 1.1f || transform.position.z > _controller.MaxDartTravelZ)
                 Finish(null, transform.position);
         }
 
         private void OnCollisionEnter(Collision collision)
         {
             if (_resolved || _controller == null) return;
-            var balloon = collision.collider.GetComponentInParent<KnockdownBalloon>();
+            var target = collision.collider.GetComponentInParent<KnockdownTarget>();
             var position = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
-            Finish(balloon, position);
+            Finish(target, position);
         }
 
-        private void Finish(KnockdownBalloon balloon, Vector3 position)
+        private void Finish(KnockdownTarget target, Vector3 position)
         {
             if (_resolved) return;
             _resolved = true;
-            _controller.ResolveDart(this, balloon, position);
+            _controller.ResolveDart(this, target, position);
             gameObject.SetActive(false);
             Destroy(gameObject);
         }
