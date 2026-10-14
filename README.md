@@ -41,6 +41,7 @@ Outputs       = Refer to branches for specific outputs
 | **Prototyping 1: Go Go Gummi!** | `gummi-ship` | Unity Gummi Ship project files and materials | [View Output →](https://github.com/ainere/GAMEDEV/tree/gummi-ship) |
 | **Gameplay: Traversal** | `traversal` | Unity Traversal project files and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/traversal) |
 | **Gameplay: Laser Room** | `laser-room` | Unity laser-corridor survival scene, scripts and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/laser-room) |
+| **Gameplay: Knockdown** | `knockdown` | Unity balloon-dart game with Static and Moving modes and FPS mouse aiming | [View Output →](https://github.com/ainere/GAMEDEV/tree/knockdown) · [Scene](https://github.com/ainere/GAMEDEV/blob/knockdown/Assets/Scenes/Knockdown.unity) |
 
 ---
 
