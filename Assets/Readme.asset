@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcf7219bab7fe46a1ad266029b2fee19, type: 3}
+  m_Name: Readme
+  m_EditorClassIdentifier: 
+  commonStyle: {fileID: 7433441132597879392, guid: d2c670ece470f4c4fa6712b8dc28a9bb, type: 3}
+  darkStyle: {fileID: 7433441132597879392, guid: 1f902e57f049a7f47986618de93f5ee1, type: 3}
+  lightStyle: {fileID: 7433441132597879392, guid: 69e7ab73923f93149821ac3a88b84856, type: 3}
+  icon: {fileID: 2800000, guid: 727a75301c3d24613a3ebcec4a24c2c8, type: 3}
+  title: 'Gameplay: Knockdown'
+  sections:
+  - heading: Play
+    text: Open Assets/Scenes/Knockdown.unity, enter Play mode, choose Static or Moving, and start the round.
+    linkText: Project instructions
+    url: https://github.com/ainere/GAMEDEV/tree/knockdown
+  - heading: Controls
+    text: Move the mouse to turn the camera. Aim with the centered crosshair and click or hold the left mouse button to throw darts. Escape pauses and releases the cursor for menus.
+    linkText: 
+    url: 
+  - heading: Modes
+    text: Static balloons stay in place. Moving rows cross the booth in alternating directions and bob vertically. Each balloon awards 10 points and respawns after 0.75 seconds during the 60-second round.
+    linkText: Course submissions
+    url: https://github.com/ainere/GAMEDEV/tree/main
+  loadedLayout: 1

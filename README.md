@@ -1,51 +1,38 @@
-<div align="center">
+# Gameplay: Knockdown
 
-# GAMEDEV — Course Submissions
+A balloon-popping carnival game for the **Gameplay: Knockdown** assignment. One editable Unity scene supports **Static** and **Moving** target modes.
 
-[![Course](https://img.shields.io/badge/Course-GAMEDEV%20S01-007ACC?style=flat-square&logo=visual-studio-code&logoColor=white)](https://github.com/ainere/GAMEDEV)
-&nbsp;
-[![Student](https://img.shields.io/badge/Student-Elkan%20Ainer%20M.%20La%20Madrid-107C41?style=flat-square)](https://github.com/ainere)
-&nbsp;
-[![ID](https://img.shields.io/badge/ID-12413739-blueviolet?style=flat-square)](https://github.com/ainere)
-&nbsp;
+## Open and play
 
-<p>Individual academic submission hub for <strong>GAMEDEV S01</strong>.</p>
+1. Open this project in Unity **6000.6.0f1**.
+2. Open `Assets/Scenes/Knockdown.unity`.
+3. Enter Play mode, choose **Static** or **Moving**, and press **Start**.
 
-</div>
+Move the mouse to turn the camera and aim with the centered crosshair. Click or hold the left mouse button to throw darts. During play, the cursor is locked and hidden. Press **Escape** to pause and release the cursor, then use the on-screen controls to resume, restart, or select a mode.
 
----
+## Rules
 
-<h2 align="center"><img src="https://raw.githubusercontent.com/ainere/ainere/main/assets/icons/user.svg" width="20" height="20" align="absmiddle" /> submission manifest.ini</h2>
+- A three-second countdown starts a 60-second round with unlimited darts.
+- Each balloon pops with one dart and awards 10 points. Balloons respawn after 0.75 seconds.
+- Static targets stay in place. Moving rows cross the booth in alternating directions, bob up and down, and loop behind its side panels.
+- Darts have visible travel time, so moving targets require a little lead.
+- At the bell, throwing and respawning stop. Darts already in flight have another 0.5 seconds to score.
+- Results show score, balloons popped, and accuracy. Misses have no score penalty.
 
-```ini
-[Submission_Manifest]
-Course        = GAMEDEV (Game Development)
-Section       = S01
-Student       = Elkan Ainer M. La Madrid
-ID_Number     = 12413739
-Institution   = De La Salle University
-Repository    = ainere/GAMEDEV
-ActiveBranch  = main (Directory)
-Outputs       = Refer to branches for specific outputs
-```
+Changing modes resets the round and camera within the same scene. Pause freezes the timer, camera, targets, darts, and respawns. Returning from a menu discards its mouse movement before aiming resumes.
 
----
+## Editing
 
-<h2 align="center"><img src="https://raw.githubusercontent.com/ainere/ainere/main/assets/icons/projects.svg" width="20" height="20" align="absmiddle" /> outputs & branch directory</h2>
+The scene contains editable booth geometry, target objects, lighting, camera, and UI. Art lives in [Assets/Art](Assets/Art), shared prefabs in [Assets/Prefabs](Assets/Prefabs), gameplay code in [Assets/Scripts](Assets/Scripts), and tests in [Assets/Tests](Assets/Tests). Edit the supplied scene and prefabs directly in Unity.
 
-> [!NOTE]
-> **Branch Navigation**: Each course deliverable and project milestone is isolated on its own dedicated branch. Refer to the directory below to view specific outputs, Unity scenes, and project assets.
+The gameplay controller exposes round and dart settings in the Inspector. Balloon components expose lane movement and respawn settings. The camera's `KnockdownCameraFraming` component exposes mouse sensitivity and look limits, and fits the booth to the Game view aspect ratio.
 
-| Output / Topic | Target Branch | Description | Link |
-| :--- | :--- | :--- | :--- |
-| **Prototyping 1: Go Go Gummi!** | `gummi-ship` | Unity Gummi Ship project files and materials | [View Output →](https://github.com/ainere/GAMEDEV/tree/gummi-ship) |
-| **Gameplay: Traversal** | `traversal` | Unity Traversal project files and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/traversal) |
-| **Gameplay: Laser Room** | `laser-room` | Unity laser-corridor survival scene, scripts and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/laser-room) |
+## Tests
 
----
+Use **Window / General / Test Runner** to run the EditMode round-state tests and PlayMode gameplay tests, including mouse look, centered aiming, pause, mode switching, scoring, respawns, and dart collisions.
 
-<div align="center">
+## Assets
 
-<sub><code>GAMEDEV S01 • De La Salle University • Academic Submission Repository</code></sub>
+The booth, balloons, darts, and game interface are original. Kenney's CC0 impact sounds accompany missed darts; the pop sound is included with the project's audio. Coaster Kit props are available in [Assets/Art/External](Assets/Art/External) for further editing. See [ASSET_CREDITS.md](ASSET_CREDITS.md) and the included licences.
 
-</div>
+The Unity scene is [Assets/Scenes/Knockdown.unity](Assets/Scenes/Knockdown.unity). The project is playable in the Editor; no standalone build is included. Find the other course submissions in the [GAMEDEV directory](https://github.com/ainere/GAMEDEV/tree/main).

@@ -1,0 +1,6 @@
+{
+  "name": "Knockdown.Game",
+  "rootNamespace": "Knockdown",
+  "references": ["Knockdown.Core", "Unity.InputSystem", "Unity.ugui", "Unity.TextMeshPro"],
+  "autoReferenced": true
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Knockdown.PlayModeTests",
+  "rootNamespace": "Knockdown.Tests",
+  "references": [
+    "Knockdown.Core",
+    "Knockdown.Game",
+    "Unity.InputSystem",
+    "Unity.ugui",
+    "Unity.TextMeshPro",
+    "Unity.RenderPipelines.Universal.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
