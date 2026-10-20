@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/LaserCorridor/Scenes/LaserCorridor.unity
-    guid: 43a5588bad58d3448b14ea2ac6e9da36
+    path: Assets/RayOEZoning/Scenes/RayOEZoning.unity
+    guid: f89ad8f38cb80de42a3f917e2ebfcbd1
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

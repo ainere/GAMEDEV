@@ -1,14 +1,32 @@
-# Verification
+# Ray-OE Zoning verification
 
-Verified with Unity **6000.6.0f1** on **2026-10-06**.
+Verified on 2026-10-20 with Unity 6000.6.0f1 on Windows.
 
-| Check | Result |
-| --- | --- |
-| Edit Mode regression suite | **36 passed, 0 failed, 0 skipped.** Covers run rules, damage and shields, floor contacts and lighting, audio limits, environment assemblies and laser schedules. |
-| Laser schedule sampling | **10,000 seeded schedules:** 7,297 accepted and 2,703 safely rejected across 64 designs, 128 mirrored layouts, 10 challenge bands and 16 ordered speed pairs. |
-| Pattern variety | Across 64 deterministic opening seeds, all four starter families appeared (15, 16, 16 and 17 selections). Full-unlock sampling covered 16 families, all 48 advanced family/variant pairs and 512 selected wave signatures. Both samples retained certified clearance and used no fallback encounter. |
-| HUD layout | A muted automated audit passed Ready, effects, Pause, Death and Win states at 1280 × 720, 1920 × 1080 and 2560 × 1080. Active text fit; HUD-only captures were reviewed for alignment. |
-| Earlier cleanup smoke check | Before the HUD and selection fixes, a muted automated run passed scene initialization, start, pause, exit opening, victory, damage, death and reset. |
-| Project import and compile | Completed successfully after temporary verification helpers were removed. |
+## Automated checks
 
-The HUD captures show the interface layout only; they do not verify full-scene appearance or replace human playtesting. No human gameplay session, audible review or hardware performance measurement is claimed. The project is intended to be opened and played in the Unity Editor; this branch does not include a standalone player build.
+- EditMode: 50 passed, 0 failed. This includes 14 stealth/detection/scene checks and 36 retained Laser Corridor tests.
+- The scene checks require one first person controller and MainCamera, complete references, no legacy gameplay scripts or missing scripts, and no AudioSource or AudioListener.
+- Actual CheckSphere, oriented CheckBox and CheckCapsule queries detect the player collider, reject unrelated geometry, and respect opaque raycast occlusion.
+- Flashlight tests cover on/off, cone, range, obstruction, shadow suppression and uninterrupted close-range reading. All four authored clue approaches are readable.
+- The clue ordering has exactly one solution.
+- PlayMode: 7 passed, 0 failed. Checks cover exposure aggregation and decay, modal input/state, capture/retry, retained notes, keypad validation, keyboard digits, clue-distance feedback and the exit.
+
+Run the suites through Unity's Test Runner. XML reports, logs and capture tooling remain local under ignored folders.
+
+## Windows runtime evidence
+
+The Windows build completed successfully. The final player also passed a launch smoke check with local capture tooling excluded. A visible, automated input playthrough used the actual first person controller and production gameplay rules. It did not teleport, force note discovery, alter detection, or bypass the puzzle.
+
+The route confirmed a straight-ahead capture, a retry retaining its first clue, a successful timed route through all three moving detector areas, four naturally recorded clues, an obstruction ray blocked by cover while the capsule query overlapped the player, wrong-code rejection, correct-code unlock and escape. The earlier complete route reached the win state at z27.508 with four notes and zero alert.
+
+World clues, notebook and keypad were visually reviewed at 720p; the final 93-second gameplay demo is 1080p/30 fps H.264. Static visual inspection used separate camera placements and was not counted as a gameplay completion. The local tool keeps those proof tiers separate.
+
+## Silent output
+
+Per the final user instruction, scene audio sources and its listener were removed, project audio is disabled, and master volume is zero. Verification runs are muted. The submitted MP4 contains a video stream only.
+
+The final MP4 fully decoded without errors: 1920×1080, 30 fps, H.264, 92.93 seconds, 21,046,866 bytes (20.1 MiB). Brief captions identify the three physics queries while the recorded diagnostic view shows their volumes and rays.
+
+## Limits
+
+The successful route is automated controller playback, not a human difficulty study or a hardware performance benchmark. No audio quality claim applies: the game and demo are intentionally silent. The original Laser Corridor checkout and its untracked presentation script were preserved.

@@ -1,25 +1,13 @@
-# Design Review
+# Ray-OE Zoning design
 
-## Core experience
+Ray-OE Zoning adapts the corridor into a short first person stealth puzzle. Its industrial architecture is extended to 28 m, with tall opaque cover and three moving scanning volumes. Existing wall, floor, ceiling, entrance and exit meshes retain their original material references.
 
-The game has one clear objective: survive a 90-second laser run, then reach the exit. A fixed, centered CCTV view gives the corridor a surveillance-room feel while keeping the player, hazards and destination in one frame. The HUD carries health, time and active effects around the camera image.
+The player reveals four physical glyph objects with a 50-degree, 8 m flashlight. Continuous illumination within 3 m records each clue after 0.8 seconds. World objects immediately hide when flashlight, cone, range or unobstructed sight fails; recorded field notes remain available.
 
-## Readability and fairness
+The clue mappings are Eye=2, Moon=6, Gate=4 and Crown=9. Eye is first, Gate is not last, and Crown immediately follows Moon. These constraints uniquely determine 2469. There are no collectible-key or discovery-count prerequisites at the keypad.
 
-The room's floor plates share the same shape and material. Their changing light communicates function: steady light marks helpful effects, and irregular flicker marks traps. This keeps the floor legible without turning its geometry into a set of visual clues.
+Each scanner performs its own real spatial query followed by obstruction raycasts. Sphere, oriented box and horizontal capsule fields move laterally on repeating patrols. One shared alert meter fills after 1.35 seconds of confirmed exposure and drains over 1.5 seconds when sight is lost. Capture gently returns the player to the entrance, resets the physical run, and preserves field notes.
 
-Lasers are the immediate warning. Their straight-line layouts are visible in the corridor; the interface does not preview patterns or show suggested dodge routes. Before a layout is selected, the safety validator checks for a continuous escape route using the player's movement and posture limits. Blue exit lasers stay lethal until shutdown, even when the player has a shield.
+The Starter Assets first person controller uses a regular camera, 2.2 m/s movement and disabled sprint/jump. Cover, timing and observation are the intended ways through the level. Notebook, keypad and pause modes freeze patrols and alert without clearing them.
 
-## Variety and pacing
-
-Sixteen pattern families each have four authored designs, for 64 designs and 128 layouts when mirrored orientations are counted. Patterns unlock through the run, and the selected speed and number of simultaneous waves increase challenge. Each run starts a fresh selection sequence; recent families and variants are downweighted when alternatives exist. These rules change the encounter order without changing the survival objective.
-
-Healing, shields and temporary slowdowns give players reasons to read the floor while moving. Traps use the same plate geometry and remain avoidable through their light behavior and the reserved escape route.
-
-## Source references
-
-- [Gameplay and project map](README.md)
-- [Asset sources and licenses](ASSET_CREDITS.md)
-- [Verification results](VERIFICATION.md)
-- Pattern selection and safety checks: `Assets/LaserCorridor/Runtime/LaserDirector.cs`, `PatternLibrary.cs` and `SafetyValidator.cs`
-- Floor and run rules: `Assets/LaserCorridor/Runtime/PanelDirector.cs` and `RunModel.cs`
+The unsettling mood comes from confined sightlines, dim cyan architecture, isolated light pools and visible surveillance machinery. There are no jump scares. The game and demo have no audio, following the final user instruction.

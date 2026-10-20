@@ -1,76 +1,66 @@
-<h1 align="center">Gameplay: Laser Room</h1>
+<h1 align="center">Ray-OE Zoning</h1>
 <p align="center"><strong>Elkan Ainer M. La Madrid · 12413739 · GAMEDEV S01</strong><br>De La Salle University · Unity 6000.6.0f1 · Universal Render Pipeline 17.6.0</p>
 
-A short survival game seen through a fixed CCTV camera. Dodge changing laser patterns for 90 seconds, read the floor lights to choose useful panels and avoid traps, then cross the exit after its blue grid shuts down.
+A first person stealth puzzle set in an abandoned industrial corridor. Use a flashlight to reveal concealed symbols and their clues, work out the four-digit exit code, and avoid three moving surveillance machines. The mood relies on dim lighting, enclosed spaces and moving surveillance equipment, without jump scares. The game and demo are silent.
 
-## Gameplay video
+## Gameplay demo
 
-[Compressed gameplay presentation and demo (MP4, 88 MiB)](Demo/LaserRoom-demo.mp4)
+[Short gameplay and detection demonstration](Demo/Ray-OE-Zoning-demo.mp4)
 
-The compressed copy is 1080p at 30 fps and is stored directly in Git.
+The 93-second demo shows flashlight visibility, all three moving detection volumes, raycast occlusion behind cover, a capture and retry with retained field notes, and the solved exit puzzle. It records automated controller playback in the real Windows game at 1080p/30 fps, with no audio stream.
 
-[Original gameplay presentation and demo (MP4)](Videos/Laser-Room-Demo.mp4)
+## Open the project
 
-The original 1080p recording runs for about 13 minutes and is stored with Git LFS. Download it from the linked file page. Cloning the recording requires Git LFS.
+```bash
+git clone --branch ray-oe-zoning --single-branch https://github.com/ainere/GAMEDEV.git
+```
 
-## Play
+Add the cloned project folder in Unity Hub and open it with **Unity 6000.6.0f1**. Open `Assets/RayOEZoning/Scenes/RayOEZoning.unity` and press Play. This branch contains the editable Unity project and demo; standalone builds and QA recordings are kept locally.
 
-1. Clone the `laser-room` branch:
-   ```bash
-   git clone --branch laser-room --single-branch https://github.com/ainere/GAMEDEV.git
-   ```
-2. Add the cloned `GAMEDEV` folder to Unity Hub and open it with **Unity 6000.6.0f1**.
-3. Open `Assets/LaserCorridor/Scenes/LaserCorridor.unity` and press **Play**.
-
-The branch contains the editable Unity project. It does not include a standalone executable.
+## Controls
 
 | Input | Action |
 | --- | --- |
-| WASD | Move through the corridor |
-| Space / Enter | Start from Ready; Space also jumps during a run |
-| Left or right Ctrl | Crouch |
-| Escape | Pause or resume |
-| R | Reset the run |
+| WASD | Move |
+| Mouse | Look |
+| F | Toggle flashlight |
+| E | Use the nearby exit keypad |
+| N | Open or close field notes |
+| Escape | Close notes/keypad, or pause/resume |
+| 0–9, Backspace, Enter | Enter, edit and submit the keypad code |
+| F3 | Toggle the detection diagnostic overlay |
 
-## How a run works
+Movement is deliberately paced. Sprint and jump are disabled. Notebook, keypad and pause screens freeze movement, patrols and alert until closed.
 
-- Start with 100 health and survive the 90-second countdown. The exit grid is lethal until the timer ends; then cross the corridor to win.
-- Moving lasers use 16 pattern families with four authored designs each. Their 64 designs and mirrored orientations form a pool of 128 layouts. New runs use a fresh sequence; recently used families and variants are avoided when other choices are available.
-- Patterns and speeds unlock and intensify as time passes. The safety validator checks each selected encounter for a continuous dodge route before it is used.
-- Floor plates have identical geometry. Steady lights mark healing, shields or slower lasers; flickering lights mark movement slowdown or shock traps.
-- The centered CCTV HUD shows health, time, active effects and run feedback. Ready, pause, death and win overlays use the same camera treatment.
+## How to play
 
-## Project map
+Find four hidden glyph objects. Their symbols, digits and ordering clues appear only when the flashlight is on, the object lies inside its cone and range, and no wall or cover blocks the beam. Looking at a clue within three metres for 0.8 seconds records it in the notebook. Turning the flashlight off or looking away hides the object again; your recorded notes remain available.
 
-| Path | Contents |
+The scanner machines move on repeating patrols. Observe them, cross when their fields move away, and use solid cover to break line of sight. Confirmed detection raises a shared alert meter. Breaking sight drains it. A full meter quietly returns you to the entrance and resets the patrols, keypad and exit; field notes survive the retry. Notes are held for the current session.
+
+Deduce the symbol order from the recorded clues and enter its four digits at the exit keypad. A correct answer disables the blue grid. Walk through the exit to finish. The keypad accepts a correct answer regardless of how many clues were recorded.
+
+## Detection mechanics
+
+| Moving machine | Functional detection query |
 | --- | --- |
-| `Assets/LaserCorridor/Scenes/LaserCorridor.unity` | Playable scene |
-| `Assets/LaserCorridor/Runtime/` | Run, player, laser, floor-panel, camera, audio and HUD logic |
-| `Assets/LaserCorridor/Data/` | Run settings, effects and authored laser patterns |
-| `Assets/LaserCorridor/Tests/EditMode/` | Automated gameplay, geometry and schedule tests |
-| `ASSET_CREDITS.md` | Asset sources, licenses and visual reference |
-| `ASSET_INVENTORY.csv` | Retained source-file paths and SHA-256 hashes |
-| `DESIGN_REVIEW.md` | Design rationale |
-| `VERIFICATION.md` | Test results and verification limits |
+| Lens rover | `Physics.CheckSphere` |
+| Rectangular scanner | `Physics.CheckBox` (the box/cube check) |
+| Capsule scanner | `Physics.CheckCapsule` |
+| All three | Obstruction `Physics.Raycast` checks confirm sight to the player |
+| Flashlight clues | Cone angle, range, on-state and obstruction raycast checks |
 
-## Verification
+The F3 overlay uses the same shape parameters as the actual queries. Layer masks restrict player checks and distinguish solid obstructions from decorative geometry. Cover has real colliders.
 
-The retained Edit Mode suite has **36 passing tests**, including 10,000 seeded safety checks covering all 64 laser designs and 128 mirrored layouts. Live selection checks reached all four opening families and all 48 advanced family/variant combinations. Run the suite through Unity's Test Runner.
+The Unity Starter Assets first person controller and Input System assets are included. A regular camera follows its camera target, with no Cinemachine dependency.
 
-A muted automated HUD check passed five states at 720p, 1080p and ultrawide resolutions. The reviewed captures isolate the HUD; human difficulty, audible output and hardware performance were not measured. See [VERIFICATION.md](VERIFICATION.md) for the scope and results.
+## Source and tests
 
-## References
+- `Assets/RayOEZoning/Runtime/`: stealth state, spatial detection, flashlight reveal, puzzle, interface and visual atmosphere.
+- `Assets/RayOEZoning/Editor/`: reproducible scene authoring and Windows build commands.
+- `Assets/RayOEZoning/Tests/`: focused EditMode and PlayMode tests.
+- `Assets/LaserCorridor/`: retained corridor art and original source used as the basis.
+- `ASSET_CREDITS.md`: included asset sources and licenses.
+- `VERIFICATION.md`: executed verification and its limits.
 
-| Reference | Project use |
-| --- | --- |
-| [Unity Character Controller manual](https://docs.unity3d.com/6000.6/Documentation/Manual/class-CharacterController.html) | Player movement and collision |
-| [Unity Input System 1.19 manual](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.19/manual/index.html) | Keyboard input |
-| [Unity UI (uGUI) 2.6 manual](https://docs.unity3d.com/Packages/com.unity.ugui@2.6/manual/index.html) | In-game interface |
-| [Universal Render Pipeline manual](https://docs.unity3d.com/6000.6/Documentation/Manual/urp/urp-introduction.html) | Scene rendering |
-| [Unity Test Framework 1.8 manual](https://docs.unity3d.com/Packages/com.unity.test-framework@1.8/manual/index.html) | Edit Mode regression tests |
-| [Quaternius Universal Animation Library](https://quaternius.itch.io/universal-animation-library) | Character model and animation source |
-| [Kenney Sci-fi Sounds](https://kenney.nl/assets/sci-fi-sounds) | Ambient and gameplay sound source |
-| [Kenney Space Station Kit](https://kenney.nl/assets/space-station-kit) | License and provenance retained; its content is not used |
-| [Meristation: Resident Evil 4 Remake — Separate Ways](https://as.com/meristation/avances/analisis-de-separate-ways-los-caminos-separados-de-ada-wong-y-leon-en-resident-evil-4-remake-n/) | Visual inspiration only; no franchise assets are included |
-
-The [asset credits](ASSET_CREDITS.md) document the included source packs and licenses. The project uses the Unity-bundled Liberation Sans font; its OFL license is included at [`Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt`](<Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt>).
+Run tests through Unity's Test Runner. The Ray-OE Zoning editor menu rebuilds the authored scene and creates a local Windows build. Legacy corridor tests exercise the retained original source scene, rather than the new stealth level.
