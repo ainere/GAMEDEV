@@ -23,8 +23,10 @@ namespace RayOEZoning
         public LayerMask playerMask;
         public LayerMask obstructionMask;
         public Transform player;
+        public Transform rayOrigin;
 
         public bool IsDetecting { get; private set; }
+        public bool HasPlayerOverlap { get; private set; }
         public Vector3 LastRayOrigin { get; private set; }
         public Vector3 LastRayTarget { get; private set; }
         public bool LastRayBlocked { get; private set; }
@@ -42,7 +44,8 @@ namespace RayOEZoning
             IsDetecting = false;
             LastRayBlocked = false;
 
-            if (player == null || !OverlapsPlayer())
+            HasPlayerOverlap = player != null && OverlapsPlayer();
+            if (!HasPlayerOverlap)
                 return false;
 
             Vector3[] targets =
@@ -107,7 +110,7 @@ namespace RayOEZoning
         {
             // Use the physical sensor/lens as the ray origin. Detection volumes can extend past the
             // player; starting from their boundary would let a ray begin on the far side of cover.
-            return transform.position;
+            return rayOrigin ? rayOrigin.position : transform.position;
         }
 
         private static Vector3 Abs(Vector3 value)

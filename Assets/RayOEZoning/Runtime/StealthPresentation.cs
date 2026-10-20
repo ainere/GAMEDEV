@@ -15,14 +15,14 @@ namespace RayOEZoning
         public TMP_FontAsset font;
         public Light[] corridorLights;
 
-        static readonly Color Ink = new Color(.035f, .052f, .060f);
-        static readonly Color Paper = new Color(.91f, .93f, .89f);
-        static readonly Color Quiet = new Color(.51f, .62f, .63f);
-        static readonly Color Cyan = new Color(.43f, .77f, .78f);
+        static readonly Color Ink = new Color(.035f, .060f, .085f);
+        static readonly Color Paper = new Color(.91f, .94f, .93f);
+        static readonly Color Quiet = new Color(.53f, .65f, .70f);
+        static readonly Color Cyan = new Color(.34f, .78f, .83f);
         static readonly Color Amber = new Color(.95f, .65f, .31f);
         static readonly Color Red = new Color(.94f, .37f, .29f);
         RectTransform canvas;
-        TMP_Text objective, torchState, prompt, notice, alertLabel, diagnostic, notebookCount;
+        TMP_Text objective, sector, torchState, prompt, notice, alertLabel, diagnostic, notebookCount;
         TMP_Text[] noteTitles, noteDigits, noteRelations;
         TMP_Text keypadEntry, keypadNotice;
         UnityEngine.UI.Image alertFill, curtain;
@@ -61,12 +61,13 @@ namespace RayOEZoning
                 events.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
             }
 
-            Text(canvas, "Project caption", "RAY-OE  /  RESTRICTED ANNEX", 18, Quiet, new Vector2(58, -45), new Vector2(600, 28), TopLeft);
-            objective = Text(canvas, "Objective", "Read the hidden markings. Find the exit code.", 25, Paper,
+            Text(canvas, "Project caption", "RAY-OE  /  SECURITY ANNEX", 18, Quiet, new Vector2(58, -45), new Vector2(600, 28), TopLeft);
+            objective = Text(canvas, "Objective", "Infiltrate the archive. Recover the maintenance override.", 25, Paper,
                 new Vector2(58, -82), new Vector2(920, 38), TopLeft);
+            sector = Text(canvas, "Current sector", "SERVICE ENTRY", 18, Cyan, new Vector2(58, -126), new Vector2(760, 28), TopLeft);
             torchState = Text(canvas, "Torch state", "F  /  LIGHT ON", 19, Cyan,
                 new Vector2(-58, -48), new Vector2(330, 30), TopRight, TextAlignmentOptions.Right);
-            Text(canvas, "Notebook hint", "N  /  FIELD NOTES      ESC  /  PAUSE", 17, Quiet,
+            Text(canvas, "Notebook hint", "N  /  MAINTENANCE NOTES      ESC  /  PAUSE", 17, Quiet,
                 new Vector2(-58, -86), new Vector2(500, 26), TopRight, TextAlignmentOptions.Right);
             var reticle = Image(canvas, "Sight point", new Color(.88f, .93f, .88f, .6f), Vector2.zero, new Vector2(3, 3), Center);
             reticle.raycastTarget = false;
@@ -75,7 +76,7 @@ namespace RayOEZoning
 
             alertGroup = Box(canvas, "Exposure", new Vector2(0, 158), new Vector2(450, 82), BottomCenter).gameObject;
             var alertRoot = (RectTransform)alertGroup.transform;
-            alertLabel = Text(alertRoot, "Exposure caption", "IN SIGHT  /  BREAK LINE OF SIGHT", 17, Amber, new Vector2(0, 15), new Vector2(450, 28), Center, TextAlignmentOptions.Center);
+            alertLabel = Text(alertRoot, "Exposure caption", "CCTV EXPOSURE / FIND COVER", 17, Amber, new Vector2(0, 15), new Vector2(450, 28), Center, TextAlignmentOptions.Center);
             Image(alertRoot, "Exposure track", new Color(.28f, .31f, .29f, .7f), new Vector2(0, -15), new Vector2(330, 4), Center);
             alertFill = Image(alertRoot, "Exposure amount", Amber, new Vector2(-165, -15), new Vector2(330, 4), Center);
             alertFill.rectTransform.pivot = new Vector2(0, .5f);
@@ -83,14 +84,14 @@ namespace RayOEZoning
             onboarding = Box(canvas, "Entry instructions", new Vector2(58, 58), new Vector2(660, 165), BottomLeft).gameObject;
             var intro = (RectTransform)onboarding.transform;
             Image(intro, "Entry accent", Cyan, new Vector2(0, 0), new Vector2(2, 165), LeftCenter);
-            Text(intro, "Entry heading", "THE WALLS REMEMBER", 22, Paper, new Vector2(28, -14), new Vector2(590, 32), TopLeft);
-            Text(intro, "Entry body", "WASD  Move     MOUSE  Look     F  Flashlight\nShine on markings to read and note them.\nAvoid the moving scans. Cover breaks their sight.", 20, Quiet,
+            Text(intro, "Entry heading", "INFILTRATE THE ARCHIVE", 22, Paper, new Vector2(28, -14), new Vector2(590, 32), TopLeft);
+            Text(intro, "Entry body", "WASD  Move     MOUSE  Look     F  Inspection light\nRead four maintenance stencils. N keeps your notes.\nTime the CCTV zones. Cabinets block their sight.\nE  Use the archive terminal.", 20, Quiet,
                 new Vector2(28, -53), new Vector2(610, 102), TopLeft);
-            diagnostic = Text(canvas, "Physics diagnostic caption", "", 18, Amber, new Vector2(58, 260), new Vector2(950, 100), BottomLeft);
+            diagnostic = Text(canvas, "Physics diagnostic caption", "", 18, Amber, new Vector2(58, 250), new Vector2(970, 150), BottomLeft);
 
             notebook = Overlay("Notebook");
             var notesPanel = Panel((RectTransform)notebook.transform, "Field notes panel", new Vector2(1040, 800));
-            Header(notesPanel, "FIELD NOTES", "Only markings you have read are transcribed here.", "N / ESC  CLOSE");
+            Header(notesPanel, "MAINTENANCE NOTES", "Read stencils are transcribed here. Notes survive a security reset.", "N / ESC  CLOSE");
             notebookCount = Text(notesPanel, "Notes count", "0 / 4 RECORDED", 18, Cyan, new Vector2(58, -140), new Vector2(800, 30), TopLeft);
             noteTitles = new TMP_Text[4]; noteDigits = new TMP_Text[4]; noteRelations = new TMP_Text[4];
             for (int i = 0; i < 4; i++)
@@ -98,13 +99,13 @@ namespace RayOEZoning
                 float y = -203 - i * 137;
                 Image(notesPanel, "Rule " + i, new Color(.25f, .36f, .37f, .55f), new Vector2(58, y - 98), new Vector2(924, 1), TopLeft);
                 noteDigits[i] = Text(notesPanel, "Recorded digit " + i, "—", 49, Quiet, new Vector2(58, y), new Vector2(76, 72), TopLeft);
-                noteTitles[i] = Text(notesPanel, "Recorded title " + i, "UNRECORDED CLUE", 21, Quiet, new Vector2(165, y), new Vector2(750, 34), TopLeft);
+                noteTitles[i] = Text(notesPanel, "Recorded title " + i, "UNREAD MAINTENANCE STENCIL", 21, Quiet, new Vector2(165, y), new Vector2(750, 34), TopLeft);
                 noteRelations[i] = Text(notesPanel, "Recorded relation " + i, "No entry.", 24, Quiet, new Vector2(165, y - 39), new Vector2(750, 57), TopLeft);
             }
 
             keypad = Overlay("Keypad");
             var keypadPanel = Panel((RectTransform)keypad.transform, "Code panel", new Vector2(650, 910));
-            Header(keypadPanel, "ACCESS TERMINAL", "Four digits. Read the markings to determine their order.", "ESC  CLOSE");
+            Header(keypadPanel, "ARCHIVE OVERRIDE", "Enter the maintenance code to release the archive door.", "ESC  CLOSE");
             var screen = Image(keypadPanel, "Terminal screen", new Color(.015f, .035f, .038f), new Vector2(0, -226), new Vector2(534, 108), TopCenter);
             keypadEntry = Text(screen.rectTransform, "Terminal digits", "_  _  _  _", 58, Cyan, Vector2.zero, new Vector2(500, 85), Center, TextAlignmentOptions.Center);
             keypadNotice = Text(keypadPanel, "Terminal feedback", "", 20, Amber, new Vector2(0, -312), new Vector2(535, 52), TopCenter, TextAlignmentOptions.Center);
@@ -116,28 +117,28 @@ namespace RayOEZoning
             Button(keypadPanel, "Erase", "BACK", new Vector2(-178, -696), new Vector2(165, 85), () => game.Backspace(), 20);
             Button(keypadPanel, "Digit 0", "0", new Vector2(0, -696), new Vector2(165, 85), () => game.AppendDigit("0"));
             Button(keypadPanel, "Submit", "ENTER", new Vector2(178, -696), new Vector2(165, 85), () => game.SubmitCode(), 20);
-            Button(keypadPanel, "Terminal close", "RETURN TO CORRIDOR", new Vector2(0, -809), new Vector2(534, 66), () => game.CloseOverlay(), 18);
+            Button(keypadPanel, "Terminal close", "RETURN TO INFILTRATION", new Vector2(0, -809), new Vector2(534, 66), () => game.CloseOverlay(), 18);
 
             pause = Overlay("Pause");
             var pausePanel = Panel((RectTransform)pause.transform, "Pause panel", new Vector2(910, 650));
-            Header(pausePanel, "CORRIDOR PAUSED", "Find the hidden digits. Deduce their order. Open the exit.", "ESC  RESUME");
-            Text(pausePanel, "Controls", "WASD   Move\nMOUSE   Look\nF   Toggle flashlight\nN   Field notes\nE   Use the exit keypad", 27, Paper,
+            Header(pausePanel, "MISSION PAUSED", "Cross three CCTV sectors. Decode the maintenance override.", "ESC  RESUME");
+            Text(pausePanel, "Controls", "WASD   Move\nMOUSE   Look\nF   Inspection flashlight\nN   Maintenance notes\nE   Archive terminal", 27, Paper,
                 new Vector2(58, -192), new Vector2(780, 220), TopLeft);
-            Text(pausePanel, "Retry explanation", "Detection returns you to the entrance. Your notes remain.\nNotes and terminals pause the moving scans while open.", 22, Quiet,
+            Text(pausePanel, "Retry explanation", "CCTV identification returns you to service entry. Notes remain.\nNotes and the archive terminal pause the camera patrols.", 22, Quiet,
                 new Vector2(58, -425), new Vector2(800, 90), TopLeft);
             Button(pausePanel, "Resume", "RESUME", new Vector2(0, -568), new Vector2(794, 64), () => game.CloseOverlay(), 20);
 
             won = Overlay("Escaped");
             var winPanel = Panel((RectTransform)won.transform, "Exit panel", new Vector2(920, 540));
-            Header(winPanel, "ACCESS RESTORED", "You found a way through the watching corridor.", "ANNEX  /  EXIT");
-            Text(winPanel, "Win body", "The markings have served their purpose.\nThe way out is open.", 29, Paper, new Vector2(58, -200), new Vector2(800, 110), TopLeft);
-            Button(winPanel, "New investigation", "NEW INVESTIGATION", new Vector2(0, -414), new Vector2(804, 68), () => game.NewGame(), 20);
+            Header(winPanel, "ARCHIVE ACCESSED", "Maintenance override accepted. The secure route is open.", "SECURITY ANNEX");
+            Text(winPanel, "Win body", "You crossed the surveillance sectors.\nInfiltration complete.", 29, Paper, new Vector2(58, -200), new Vector2(800, 110), TopLeft);
+            Button(winPanel, "New investigation", "RESTART INFILTRATION", new Vector2(0, -414), new Vector2(804, 68), () => game.NewGame(), 20);
 
             curtain = Image(canvas, "Detected fade", new Color(.025f, .035f, .04f, 0), Vector2.zero, Vector2.zero, Center);
             Stretch(curtain.rectTransform); curtain.raycastTarget = false;
             caughtMessage = Box(curtain.rectTransform, "Detected message", Vector2.zero, new Vector2(800, 160), Center).gameObject;
-            Text((RectTransform)caughtMessage.transform, "Detected title", "DETECTED", 34, Paper, new Vector2(0, 19), new Vector2(800, 55), Center, TextAlignmentOptions.Center);
-            Text((RectTransform)caughtMessage.transform, "Retained notes", "Returning to the entrance. Your field notes remain.", 21, Quiet, new Vector2(0, -33), new Vector2(800, 42), Center, TextAlignmentOptions.Center);
+            Text((RectTransform)caughtMessage.transform, "Detected title", "IDENTIFIED BY CCTV", 34, Paper, new Vector2(0, 19), new Vector2(800, 55), Center, TextAlignmentOptions.Center);
+            Text((RectTransform)caughtMessage.transform, "Retained notes", "Security reset. Returning to entry. Your notes remain.", 21, Quiet, new Vector2(0, -33), new Vector2(800, 42), Center, TextAlignmentOptions.Center);
             built = true;
         }
 
@@ -150,7 +151,9 @@ namespace RayOEZoning
             if (door) door.localPosition = Vector3.Lerp(door.localPosition, closedDoorPosition + (game.ExitUnlocked ? Vector3.up * 3.6f : Vector3.zero), Time.unscaledDeltaTime * .8f);
             notebook.SetActive(game.Mode == GameMode.Notebook); keypad.SetActive(game.Mode == GameMode.Keypad);
             pause.SetActive(game.Mode == GameMode.Paused); won.SetActive(game.Mode == GameMode.Won);
-            objective.text = game.ExitUnlocked ? "Exit unlocked. Leave the annex." : "Read the hidden markings. Find the exit code.";
+            objective.text = game.ExitUnlocked ? "Archive unlocked. Cross the security threshold." : "Infiltrate the archive. Recover the maintenance override.";
+            float z = game.body ? game.body.transform.position.z : 0;
+            sector.text = z < 3.8f ? "SERVICE ENTRY  /  FOUR MAINTENANCE STENCILS" : z < 10.15f ? "SECTOR 01  /  PERIMETER CCTV" : z < 18.1f ? "SECTOR 02  /  SIGNAL PROCESSING" : z < 25.55f ? "SECTOR 03  /  RECORDS APPROACH" : "ARCHIVE  /  PROTECTED TERMINAL";
             torchState.text = game.TorchOn ? "F  /  LIGHT ON" : "F  /  LIGHT OFF";
             torchState.color = game.TorchOn ? Cyan : Quiet;
             onboarding.SetActive(playing && game.body && game.body.transform.position.z < 3.3f && playedTime < 50);
@@ -160,15 +163,29 @@ namespace RayOEZoning
             alertFill.rectTransform.sizeDelta = new Vector2(330 * game.Alert, 4);
             alertFill.color = Color.Lerp(Amber, Red, game.Alert);
             alertLabel.color = alertFill.color;
-            alertLabel.text = string.IsNullOrEmpty(game.DetectorName) ? "EXPOSURE FADING" : "IN SIGHT  /  BREAK LINE OF SIGHT";
+            alertLabel.text = string.IsNullOrEmpty(game.DetectorName) ? "CAMERA SIGHT BROKEN" : "CCTV EXPOSURE / FIND COVER";
             curtain.color = new Color(.025f, .035f, .04f, game.Mode == GameMode.Caught ? Mathf.Clamp01(game.CaughtFade) : 0);
             caughtMessage.SetActive(game.Mode == GameMode.Caught);
             if (game.Mode == GameMode.Notebook) RefreshNotes();
             keypadEntry.text = SpacedCode(game.KeypadInput);
             keypadNotice.text = game.Mode == GameMode.Keypad ? game.Notice : "";
-            diagnostic.text = game.Diagnostics ? "PHYSICS VIEW  /  F3\nActual query volumes + latest line-of-sight ray\n" + game.DetectorName : "";
+            diagnostic.text = game.Diagnostics ? DiagnosticText() : "";
             for (int i = 0; i < sceneLights.Count; i++)
                 if (sceneLights[i]) sceneLights[i].intensity = lightLevels[i] * (.94f + .06f * Mathf.Sin(playedTime * .43f + i * .91f));
+        }
+
+        string DiagnosticText()
+        {
+            string text = "F3 / SURVEILLANCE DIAGNOSTICS";
+            if (game.hazards == null) return text;
+            for (int i = 0; i < game.hazards.Length; i++)
+            {
+                var detector = game.hazards[i]; if (!detector) continue;
+                string query = detector.shape == DetectionShape.Sphere ? "Physics.CheckSphere" : detector.shape == DetectionShape.Box ? "Physics.CheckBox" : "Physics.CheckCapsule";
+                string state = !detector.HasPlayerOverlap ? "OUTSIDE / RAY NOT SAMPLED" : detector.IsDetecting ? "DETECTING / RAY CLEAR" : "OCCLUDED / RAY BLOCKED";
+                text += "\nCAM 0" + (i + 1) + "  " + query + "  /  " + state;
+            }
+            return text;
         }
 
         void RefreshNotes()
@@ -177,7 +194,7 @@ namespace RayOEZoning
             for (int i = 0; i < 4; i++)
             {
                 bool known = i < game.Notes.Count;
-                noteTitles[i].text = known ? game.Notes[i].title.ToUpperInvariant() : "UNRECORDED CLUE";
+                noteTitles[i].text = known ? game.Notes[i].title.ToUpperInvariant() : "UNREAD MAINTENANCE STENCIL";
                 noteDigits[i].text = known ? game.Notes[i].digit : "—";
                 noteRelations[i].text = known ? (string.IsNullOrEmpty(game.Notes[i].relation) ? "No ordering statement on this marking." : game.Notes[i].relation) : "No entry.";
                 noteTitles[i].color = noteRelations[i].color = known ? Paper : Quiet;

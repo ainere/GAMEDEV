@@ -22,7 +22,7 @@ namespace RayOEZoning.Editor
         const string SourcePath = "Assets/LaserCorridor/Scenes/LaserCorridor.unity";
         const int World = 8, PlayerLayer = 9, ClueLayer = 10, ScannerLayer = 11;
         const int Obstructions = (1 << World) | 1;
-        static Material steel, dark, cyan, amber, line, ink;
+        static Material steel, dark, cyan, amber, line, ink, pale, navy, floor, black, label, cameraEnamel, serverFace;
         static TMP_FontAsset font;
 
         [MenuItem("Ray-OE Zoning/Create level")]
@@ -34,10 +34,23 @@ namespace RayOEZoning.Editor
             SetLayers();
             DisableProjectAudio();
             font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
-            steel = Existing("Brushed aluminium"); dark = Existing("Gunmetal structure");
-            cyan = Material("Annex cyan", new Color(.22f, .65f, .68f), true);
-            amber = Material("Scanner amber", new Color(1, .52f, .12f), true);
-            ink = Material("Marking ivory", new Color(.84f, .90f, .78f), true);
+            steel = Existing("Brushed aluminium");
+            dark = Material("Graphite service metal", new Color(.055f, .073f, .092f), false);
+            navy = Material("Navy structural steel", new Color(.075f, .12f, .17f), false);
+            pale = Material("Pale equipment enamel", new Color(.53f, .60f, .61f), false);
+            cameraEnamel = Material("CCTV housing enamel", new Color(.68f, .76f, .76f), false);
+            serverFace = Material("Server blade blue gray", new Color(.18f, .25f, .30f), false);
+            black = Material("Optical glass and vents", new Color(.012f, .021f, .027f), false);
+            EmissionFloor(dark, new Color(.006f, .010f, .015f));
+            EmissionFloor(navy, new Color(.006f, .011f, .018f));
+            EmissionFloor(pale, new Color(.011f, .017f, .021f));
+            EmissionFloor(cameraEnamel, new Color(.047f, .065f, .073f));
+            EmissionFloor(serverFace, new Color(.012f, .020f, .028f));
+            floor = FloorMaterial();
+            cyan = Material("Annex cyan", new Color(.19f, .65f, .70f), true);
+            amber = Material("Scanner amber", new Color(.95f, .48f, .12f), true);
+            ink = Material("Maintenance stencil", new Color(.85f, .92f, .83f), true);
+            label = Material("Equipment lettering", new Color(.70f, .79f, .79f), true);
             line = Material("Scanning outline", new Color(.86f, .55f, .19f, .28f), true, true);
 
             var source = EditorSceneManager.OpenScene(SourcePath, OpenSceneMode.Single);
@@ -47,38 +60,22 @@ namespace RayOEZoning.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
             SceneManager.SetActiveScene(scene);
             var root = new GameObject("Ray-OE Zoning");
-            var architecture = Child(root.transform, "Retained corridor architecture");
-            for (int bay = 0; bay < 2; bay++)
-            {
-                var module = Child(architecture, "Corridor length " + (bay + 1));
-                module.position = Vector3.forward * bay * 14;
-                foreach (string part in new[] { "Floor", "Walls", "Ceiling" })
-                {
-                    var sourcePart = sourceEnvironment.Find(part);
-                    if (!sourcePart) throw new InvalidOperationException("Source architecture missing " + part);
-                    var clone = UnityEngine.Object.Instantiate(sourcePart.gameObject, module, false);
-                    clone.name = part; StripLegacy(clone); SetLayer(clone, World);
-                }
-            }
-            var entranceSource = sourceEnvironment.Find("Entrance");
-            if (entranceSource)
-            {
-                var entrance = UnityEngine.Object.Instantiate(entranceSource.gameObject, architecture, false);
-                entrance.name = "Retained entrance"; StripLegacy(entrance); SetLayer(entrance, World);
-            }
+            var architecture = Child(root.transform, "Security annex architecture");
+            Architecture(architecture);
             var exitSource = sourceEnvironment.Find("Exit Door");
             if (!exitSource) throw new InvalidOperationException("Source exit assembly is missing.");
             var exitAssembly = UnityEngine.Object.Instantiate(exitSource.gameObject, architecture, false);
-            exitAssembly.name = "Retained exit assembly"; exitAssembly.transform.position += Vector3.forward * 14;
+            exitAssembly.name = "Archive blast door"; exitAssembly.transform.position += Vector3.forward * 14;
             StripLegacy(exitAssembly); SetLayer(exitAssembly, World);
             Transform door = exitAssembly.transform.Find("Door");
             Transform keypad = exitAssembly.transform.Find("Keypad");
             if (keypad)
             {
-                keypad.position = new Vector3(1.86f, 1.4f, 26.4f);
+                keypad.position = new Vector3(1.78f, 1.25f, 26.4f);
                 keypad.rotation = Quaternion.Euler(0, 90, 0);
             }
-            else keypad = Child(root.transform, "Exit keypad");
+            else keypad = Child(root.transform, "Archive terminal");
+            ArchiveTerminal(architecture, keypad);
 
             // New simple collision shell matches the retained visible architecture and its extension.
             var collision = Child(root.transform, "Solid world");
@@ -87,28 +84,28 @@ namespace RayOEZoning.Editor
             Solid(collision, "Right wall collision", new Vector3(2.10f, 2.1f, 13.5f), new Vector3(.2f, 4.2f, 30), null, false);
             Solid(collision, "Ceiling collision", new Vector3(0, 4.3f, 13.5f), new Vector3(4.2f, .2f, 30), null, false);
             Solid(collision, "Entrance collision", new Vector3(0, 2.1f, -.85f), new Vector3(4.2f, 4.2f, .2f), null, false);
-            var cover = Child(root.transform, "Opaque sight breaks");
+            var cover = Child(root.transform, "Server cabinet cover");
             Cover(cover, -1, 3.3f, "01"); Cover(cover, 1, 9.3f, "02");
             Cover(cover, 1, 10.7f, "03"); Cover(cover, -1, 17.2f, "04");
             Cover(cover, -1, 18.5f, "05"); Cover(cover, 1, 22.3f, "06");
 
-            var session = Child(root.transform, "Investigation").gameObject;
+            var session = Child(root.transform, "Archive infiltration mission").gameObject;
             var game = session.AddComponent<StealthGame>();
             game.exposureSeconds = 1.35f; game.decaySeconds = 1.5f; game.escapeZ = 27.5f;
             var spawn = Child(root.transform, "Entrance spawn"); spawn.position = new Vector3(0, .06f, .7f); game.spawn = spawn;
             CreatePlayer(root.transform, game, spawn.position);
             game.keypad = keypad;
 
-            var scanners = Child(root.transform, "Patrolling detection rigs");
-            var sphere = Scanner(scanners, game, "01 / Spherical observer", DetectionShape.Sphere, new Vector3(0, 1.1f, 6.5f), 8);
+            var scanners = Child(root.transform, "Rail surveillance cameras");
+            var sphere = Scanner(scanners, game, "CAM 01 / PERIMETER", DetectionShape.Sphere, new Vector3(0, 1.1f, 6.5f), 8);
             sphere.radius = 1.55f;
-            var box = Scanner(scanners, game, "02 / Rectangular survey", DetectionShape.Box, new Vector3(0, 1.2f, 14), 9);
+            var box = Scanner(scanners, game, "CAM 02 / SIGNAL", DetectionShape.Box, new Vector3(0, 1.2f, 14), 9);
             box.halfExtents = new Vector3(1.3f, 1.2f, 2);
-            var capsule = Scanner(scanners, game, "03 / Longitudinal observer", DetectionShape.Capsule, new Vector3(0, 1.1f, 21.8f), 10);
+            var capsule = Scanner(scanners, game, "CAM 03 / RECORDS", DetectionShape.Capsule, new Vector3(0, 1.1f, 21.8f), 10);
             capsule.radius = .9f; capsule.capsulePointA = new Vector3(0, 0, -2); capsule.capsulePointB = new Vector3(0, 0, 2);
             game.hazards = new[] { sphere, box, capsule };
 
-            var markings = Child(root.transform, "Light responsive markings");
+            var markings = Child(root.transform, "Hidden maintenance stencils");
             game.clues = new[] {
                 Clue(markings, 0, -1, 2.5f), Clue(markings, 1, 1, 8.5f),
                 Clue(markings, 2, -1, 15.5f), Clue(markings, 3, 1, 23.2f)
@@ -116,8 +113,7 @@ namespace RayOEZoning.Editor
             var grid = Child(root.transform, "Blue exit lattice"); grid.position = new Vector3(0, 0, 27.05f);
             grid.gameObject.layer = World;
             var gridCollider = grid.gameObject.AddComponent<BoxCollider>(); gridCollider.center = new Vector3(0, 1.8f, 0); gridCollider.size = new Vector3(4, 3.6f, .10f);
-            for (int x = -3; x <= 3; x++) LocalLine(grid, "Exit vertical", new[] { new Vector3(x * .49f, .08f, 0), new Vector3(x * .49f, 3.48f, 0) }, cyan, .014f);
-            for (int y = 0; y < 9; y++) LocalLine(grid, "Exit horizontal", new[] { new Vector3(-1.92f, .12f + y * .4f, 0), new Vector3(1.92f, .12f + y * .4f, 0) }, cyan, .012f);
+            for (int y = 0; y < 6; y++) LocalLine(grid, "Archive security bar", new[] { new Vector3(-1.92f, .20f + y * .53f, 0), new Vector3(1.92f, .20f + y * .53f, 0) }, cyan, .009f);
             var danger = sourceEnvironment.Find("Fixtures/Danger stripe");
             if (danger)
             {
@@ -129,16 +125,15 @@ namespace RayOEZoning.Editor
             var presentation = session.AddComponent<StealthPresentation>();
             presentation.game = game; presentation.exitGrid = grid.gameObject; presentation.door = door;
             presentation.font = font; presentation.corridorLights = lights;
-            var surfaces = architecture.gameObject.AddComponent<AnnexSurfaces>();
-            surfaces.targets = architecture.GetComponentsInChildren<Renderer>(true);
+            var surfaces = exitAssembly.AddComponent<AnnexSurfaces>();
+            surfaces.targets = exitAssembly.GetComponentsInChildren<Renderer>(true);
             surfaces.Apply();
 
             // Clear, visible controls at the entrance are ordinary world signage, never puzzle clues.
-            var entry = Child(root.transform, "Entrance instructions"); entry.position = new Vector3(0, 2.55f, -.72f);
+            var entry = Child(root.transform, "Entry airlock identity"); entry.position = new Vector3(0, 2.55f, -.72f);
             entry.rotation = Quaternion.Euler(0, 180, 0);
-            WorldText(entry, "Annex identity", "RESTRICTED ANNEX", new Vector3(0, .27f, 0), 2.8f, .20f, cyan.color);
-            WorldText(entry, "Annex subtitle", "RAY-OE ZONING", Vector3.zero, 2.1f, .13f, new Color(.6f, .73f, .73f));
-            WorldText(keypad, "Keypad plate", "ACCESS / 4 DIGITS", new Vector3(0, .33f, -.035f), .55f, .06f, new Color(.6f, .8f, .8f));
+            WorldText(entry, "Annex identity", "SECURITY ANNEX", new Vector3(0, .27f, 0), 2.8f, .20f, cyan.color);
+            WorldText(entry, "Annex subtitle", "RAY-OE / SERVICE ENTRY", Vector3.zero, 2.1f, .13f, new Color(.6f, .73f, .73f));
             EditorSceneManager.CloseScene(source, true);
             SceneManager.SetActiveScene(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -148,7 +143,7 @@ namespace RayOEZoning.Editor
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.runInBackground = true;
             AssetDatabase.SaveAssets();
-            Debug.Log("Ray-OE Zoning authored: 28 m corridor, 3 check-shape patrols, 4 hidden clues, first-person controller and complete interface. " + ScenePath);
+            Debug.Log("Security annex authored: three CCTV sectors, server cover, four maintenance stencils and protected archive terminal. " + ScenePath);
         }
 
         [MenuItem("Ray-OE Zoning/Build Windows")]
@@ -161,6 +156,107 @@ namespace RayOEZoning.Editor
                 target = BuildTarget.StandaloneWindows64, options = BuildOptions.None
             });
             if (report.summary.result != BuildResult.Succeeded) throw new InvalidOperationException("Windows build failed: " + report.summary.result);
+        }
+
+        static void Architecture(Transform root)
+        {
+            var shell = Child(root, "Graphite service shell");
+            Primitive(shell, "Service floor underlay", PrimitiveType.Cube, new Vector3(0, -.07f, 13.5f), new Vector3(4.15f, .10f, 30), dark, false);
+            Primitive(shell, "Solid ceiling", PrimitiveType.Cube, new Vector3(0, 4.21f, 13.5f), new Vector3(4.2f, .12f, 30), navy, false);
+            Primitive(shell, "Entry airlock wall", PrimitiveType.Cube, new Vector3(0, 2.1f, -.88f), new Vector3(4.2f, 4.2f, .15f), navy, false);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Primitive(shell, "Service wall backing", PrimitiveType.Cube, new Vector3(side * 2.08f, 2.1f, 13.5f), new Vector3(.16f, 4.2f, 30), navy, false);
+                Primitive(shell, "Graphite skirting", PrimitiveType.Cube, new Vector3(side * 1.99f, .22f, 13.5f), new Vector3(.035f, .42f, 29), dark, false);
+                Primitive(shell, "Cyan wayfinding strip", PrimitiveType.Cube, new Vector3(side * 1.965f, .115f, 13.5f), new Vector3(.012f, .013f, 28), cyan, false);
+                Primitive(shell, "Upper cable trunk", PrimitiveType.Cube, new Vector3(side * 1.87f, 3.75f, 13.5f), new Vector3(.24f, .30f, 29), dark, false);
+                for (int j = 0; j < 7; j++)
+                {
+                    float z = 1.65f + j * 4;
+                    Primitive(shell, "Pale wall infill " + side + "/" + j, PrimitiveType.Cube,
+                        new Vector3(side * 1.995f, 1.89f, z), new Vector3(.028f, 2.88f, 3.86f), pale, false);
+                    Primitive(shell, "Panel service seam", PrimitiveType.Cube,
+                        new Vector3(side * 1.973f, .65f, z), new Vector3(.012f, .023f, 3.72f), navy, false);
+                    Primitive(shell, "Navy structural jamb", PrimitiveType.Cube,
+                        new Vector3(side * 1.98f, 2.1f, z + 1.96f), new Vector3(.065f, 4.12f, .09f), navy, false);
+                }
+            }
+            var deck = Child(root, "Large service floor plates");
+            for (int row = 0; row < 15; row++)
+                for (int column = 0; column < 4; column++)
+                    Primitive(deck, "Deck plate " + row + "/" + column, PrimitiveType.Cube,
+                        new Vector3(-1.5f + column, -.004f, -.5f + row * 2), new Vector3(.985f, .018f, 1.985f), floor, false);
+            for (int i = 0; i < 8; i++)
+            {
+                float z = -.35f + i * 4;
+                Primitive(shell, "Ceiling cross member", PrimitiveType.Cube, new Vector3(0, 4.07f, z), new Vector3(3.9f, .16f, .13f), dark, false);
+                Primitive(shell, "Ceiling light aperture", PrimitiveType.Cube, new Vector3(0, 4.09f, z + 1.8f), new Vector3(1.6f, .035f, .12f), label, false);
+            }
+            SectorPortal(root, "01", "PERIMETER", "ENTRY SURVEILLANCE", 3.8f);
+            SectorPortal(root, "02", "SIGNAL", "SURVEILLANCE PROCESSING", 10.15f);
+            SectorPortal(root, "03", "RECORDS", "ARCHIVE APPROACH", 18.1f);
+            SectorPortal(root, "A", "ARCHIVE", "MAINTENANCE ACCESS ONLY", 25.55f);
+            WallSign(root, -1, 5.25f, "01", "PERIMETER", "PANORAMIC CCTV / ACTIVE");
+            WallSign(root, 1, 12.6f, "02", "SIGNAL", "CAMERA NETWORK / ACTIVE");
+            WallSign(root, -1, 20.1f, "03", "RECORDS", "SECURE RECORDS / ACTIVE");
+            var entry = Child(root, "Entry mission placard"); entry.position = new Vector3(1.94f, 2.25f, 1.25f); entry.rotation = Quaternion.Euler(0, 90, 0);
+            WorldText(entry, "Entry mission identity", "SECURITY ANNEX", new Vector3(0, .14f, -.03f), 1.18f, .13f, new Color(.12f, .20f, .25f));
+            WorldText(entry, "Entry mission direction", "ARCHIVE TERMINAL  /  AHEAD", new Vector3(0, -.10f, -.03f), 1.18f, .063f, new Color(.17f, .26f, .30f));
+            WorldText(entry, "Entry camera warning", "AMBER ZONES ARE UNDER CCTV", new Vector3(0, -.25f, -.03f), 1.18f, .052f, new Color(.17f, .26f, .30f));
+            foreach (float z in new[] { 1.6f, 9.8f, 17.8f, 25.4f })
+            {
+                var arrow = Child(root, "Archive route chevron"); arrow.position = new Vector3(0, .012f, z);
+                LocalLine(arrow, "Route direction", new[] { new Vector3(-.12f, 0, -.10f), new Vector3(0, 0, .04f), new Vector3(.12f, 0, -.10f) }, cyan, .016f);
+            }
+        }
+
+        static void SectorPortal(Transform root, string number, string title, string subtitle, float z)
+        {
+            var portal = Child(root, "Sector " + number + " threshold"); portal.position = new Vector3(0, 0, z);
+            Primitive(portal, "Sector lintel", PrimitiveType.Cube, new Vector3(0, 3.44f, 0), new Vector3(3.98f, .62f, .16f), navy, false);
+            Primitive(portal, "Sector cyan datum", PrimitiveType.Cube, new Vector3(0, 3.12f, -.09f), new Vector3(3.82f, .018f, .02f), cyan, false);
+            for (int side = -1; side <= 1; side += 2)
+                Primitive(portal, "Threshold jamb", PrimitiveType.Cube, new Vector3(side * 1.99f, 1.78f, 0), new Vector3(.075f, 3.55f, .16f), navy, false);
+            WorldText(portal, "Sector identity", number + "  /  " + title, new Vector3(0, 3.50f, -.105f), 2.75f, .20f, label.color);
+            WorldText(portal, "Sector service caption", subtitle, new Vector3(0, 3.25f, -.105f), 2.65f, .060f, cyan.color);
+        }
+
+        static void WallSign(Transform root, int side, float z, string number, string title, string subtitle)
+        {
+            var sign = Child(root, "Sector " + number + " wall identity"); sign.position = new Vector3(side * 1.94f, 2.55f, z);
+            sign.rotation = Quaternion.Euler(0, side < 0 ? -90 : 90, 0);
+            WorldText(sign, "Sector number", "SECTOR " + number, new Vector3(0, .22f, -.02f), 1.25f, .18f, new Color(.11f, .20f, .26f));
+            WorldText(sign, "Sector name", title, new Vector3(0, -.02f, -.02f), 1.25f, .12f, new Color(.11f, .20f, .26f));
+            WorldText(sign, "Surveillance type", subtitle, new Vector3(0, -.22f, -.02f), 1.28f, .050f, new Color(.17f, .27f, .31f));
+        }
+
+        static void ArchiveTerminal(Transform root, Transform keypad)
+        {
+            var console = Child(root, "Protected archive control console"); console.position = new Vector3(1.89f, 1.43f, 26.4f); console.rotation = Quaternion.Euler(0, 90, 0);
+            Primitive(console, "Console pale case", PrimitiveType.Cube, Vector3.zero, new Vector3(.96f, 1.65f, .16f), pale, false);
+            Primitive(console, "Console dark inset", PrimitiveType.Cube, new Vector3(0, .03f, -.095f), new Vector3(.81f, 1.43f, .045f), dark, false);
+            Primitive(console, "Terminal glass", PrimitiveType.Cube, new Vector3(0, .39f, -.124f), new Vector3(.66f, .36f, .015f), black, false);
+            LocalLine(console, "Terminal cyan edge", new[] { new Vector3(-.34f, .58f, -.14f), new Vector3(.34f, .58f, -.14f) }, cyan, .012f);
+            WorldText(console, "Terminal identity", "ARCHIVE", new Vector3(0, .45f, -.15f), .58f, .075f, cyan.color);
+            WorldText(console, "Terminal locked state", "MAINTENANCE OVERRIDE", new Vector3(0, .31f, -.15f), .62f, .038f, label.color);
+            WorldText(console, "Terminal instruction", "4 DIGITS / AUTHORIZATION", new Vector3(0, -.48f, -.15f), .67f, .044f, label.color);
+            WorldText(console, "Terminal zone", "PROTECTED SERVICE TERMINAL", new Vector3(0, -.64f, -.15f), .69f, .030f, cyan.color);
+            // Keep the actual legacy keypad mesh as the console's physical input device.
+            keypad.position = new Vector3(1.74f, 1.25f, 26.4f); keypad.rotation = Quaternion.Euler(0, 90, 0);
+        }
+
+        static Material FloorMaterial()
+        {
+            const string path = "Assets/RayOEZoning/Art/Annex service deck.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (!material)
+            {
+                var original = Existing("Steel floor plate");
+                material = original ? new Material(original) : new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                material.name = "Annex service deck"; AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetColor("_BaseColor", new Color(.13f, .18f, .22f)); material.SetColor("_EmissionColor", Color.black);
+            material.SetFloat("_Metallic", .25f); material.SetFloat("_Smoothness", .3f); EditorUtility.SetDirty(material); return material;
         }
 
         static void CreatePlayer(Transform root, StealthGame game, Vector3 at)
@@ -196,15 +292,33 @@ namespace RayOEZoning.Editor
             var detector = rig.gameObject.AddComponent<HazardDetector>(); detector.shape = shape; detector.home = home;
             detector.lateralAmplitude = 1.15f; detector.period = period; detector.phase = shape == DetectionShape.Box ? 1.8f : 0;
             detector.player = game.body.transform; detector.playerMask = 1 << PlayerLayer; detector.obstructionMask = Obstructions;
-            var body = Primitive(rig, "Survey head", shape == DetectionShape.Sphere ? PrimitiveType.Sphere : PrimitiveType.Cube,
-                Vector3.zero, shape == DetectionShape.Sphere ? Vector3.one * .35f : new Vector3(.34f, .20f, .31f), dark, false);
-            body.layer = ScannerLayer;
-            Primitive(rig, "Amber optic", PrimitiveType.Sphere, new Vector3(0, 0, -.18f), Vector3.one * .10f, amber, false).layer = ScannerLayer;
-            LocalLine(rig, "Overhead suspension", new[] { new Vector3(0, .19f, 0), new Vector3(0, 2.86f, 0) }, steel, .025f);
-            var lamp = rig.gameObject.AddComponent<Light>(); lamp.type = LightType.Point; lamp.color = new Color(1, .52f, .15f); lamp.intensity = .24f; lamp.range = 3.2f;
-            var visual = rig.gameObject.AddComponent<ScannerVisual>(); visual.detector = detector; visual.game = game; visual.lineMaterial = line; visual.lamp = lamp;
-            var rail = Child(root, "Rail " + name); rail.position = new Vector3(0, 4.02f, home.z);
-            Primitive(rail, "Ceiling rail", PrimitiveType.Cube, Vector3.zero, new Vector3(3.7f, .06f, .07f), dark, false);
+            var camera = Child(rig, "Panoramic CCTV assembly"); camera.localPosition = new Vector3(0, 2.95f - home.y, 0);
+            Primitive(camera, "Pale panoramic housing", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.57f, .055f, .57f), cameraEnamel, false);
+            Primitive(camera, "Graphite optical collar", PrimitiveType.Cylinder, new Vector3(0, -.062f, 0), new Vector3(.46f, .025f, .46f), dark, false);
+            Primitive(camera, "Smoked optical dome", PrimitiveType.Sphere, new Vector3(0, -.105f, 0), new Vector3(.40f, .27f, .40f), black, false);
+            var lensOrigin = Child(camera, "Panoramic optical origin"); lensOrigin.localPosition = new Vector3(0, -.10f, 0);
+            detector.rayOrigin = lensOrigin;
+            Renderer status = null;
+            for (int i = 0; i < 3; i++)
+            {
+                float a = i * Mathf.PI * 2 / 3;
+                var diode = Primitive(camera, "Panoramic status optic", PrimitiveType.Sphere,
+                    new Vector3(Mathf.Sin(a) * .19f, -.10f, Mathf.Cos(a) * .19f), Vector3.one * .047f, amber, false);
+                if (status == null) status = diode.GetComponent<Renderer>();
+            }
+            Primitive(camera, "Camera suspension stem", PrimitiveType.Cylinder, new Vector3(0, .37f, 0), new Vector3(.065f, .32f, .065f), steel, false);
+            Primitive(camera, "Rail carriage", PrimitiveType.Cube, new Vector3(0, .73f, 0), new Vector3(.38f, .13f, .30f), cameraEnamel, false);
+            var identity = Child(camera, "Camera equipment label"); identity.localPosition = new Vector3(0, .73f, -.157f);
+            WorldText(identity, "Camera ID", "CCTV " + (shape == DetectionShape.Sphere ? "01" : shape == DetectionShape.Box ? "02" : "03"), Vector3.zero, .29f, .055f, new Color(.09f, .17f, .23f));
+            var lightRoot = Child(camera, "Amber zone illumination"); lightRoot.localPosition = new Vector3(0, -.11f, 0);
+            var lamp = lightRoot.gameObject.AddComponent<Light>(); lamp.type = LightType.Point; lamp.color = new Color(1, .52f, .15f); lamp.intensity = .15f; lamp.range = 3.1f;
+            var visual = rig.gameObject.AddComponent<ScannerVisual>(); visual.detector = detector; visual.game = game; visual.lineMaterial = line; visual.lamp = lamp; visual.lens = status;
+            visual.statusLights = camera.GetComponentsInChildren<Renderer>().Where(r => r.name == "Panoramic status optic").ToArray();
+            SetLayer(camera.gameObject, ScannerLayer);
+            var rail = Child(root, "Rail " + name); rail.position = new Vector3(0, 3.74f, home.z);
+            Primitive(rail, "Fixed camera rail", PrimitiveType.Cube, Vector3.zero, new Vector3(3.65f, .10f, .11f), dark, false);
+            for (int side = -1; side <= 1; side += 2)
+                Primitive(rail, "Ceiling rail mounting", PrimitiveType.Cube, new Vector3(side * 1.65f, .20f, 0), new Vector3(.11f, .40f, .17f), steel, false);
             return detector;
         }
 
@@ -215,12 +329,17 @@ namespace RayOEZoning.Editor
             // in front of them, rather than letting ribs cut across its pictogram and sentence.
             var mount = Child(root, definition.title + " marking mount"); mount.position = new Vector3(side * 1.80f, 1.55f, z);
             mount.rotation = Quaternion.Euler(0, side < 0 ? -90 : 90, 0);
-            Primitive(mount, "Recessed metal mount", PrimitiveType.Cube, new Vector3(0, 0, .018f), new Vector3(1.30f, 1.38f, .035f), dark, false).layer = World;
+            Primitive(mount, "Pale maintenance hatch", PrimitiveType.Cube, new Vector3(0, 0, .025f), new Vector3(1.30f, 1.61f, .065f), pale, false).layer = World;
+            Primitive(mount, "Recessed stencil field", PrimitiveType.Cube, new Vector3(0, -.06f, -.017f), new Vector3(1.18f, 1.18f, .023f), dark, false).layer = World;
+            Primitive(mount, "Hatch mounting depth", PrimitiveType.Cube, new Vector3(0, 0, .105f), new Vector3(1.07f, 1.43f, .15f), navy, false).layer = World;
+            WorldText(mount, "Maintenance hatch label", "MAINTENANCE / UV STENCIL", new Vector3(0, .655f, -.021f), 1.08f, .045f, new Color(.10f, .18f, .23f));
+            for (int sideBolt = -1; sideBolt <= 1; sideBolt += 2)
+                Primitive(mount, "Hatch fixing", PrimitiveType.Cube, new Vector3(sideBolt * .59f, .73f, -.014f), new Vector3(.024f, .024f, .012f), navy, false);
             // The hidden content projects away from its ordinary mounting surface toward the room.
             var content = Child(mount, definition.title + " light responsive content"); content.localPosition = new Vector3(0, 0, -.075f);
             content.gameObject.layer = ClueLayer;
-            DrawGlyph(content, index, new Vector3(0, .38f, 0));
-            WorldText(content, "Glyph title", definition.title.ToUpperInvariant(), new Vector3(0, .10f, 0), 1.05f, .11f, ink.color);
+            DrawGlyph(content, index, new Vector3(0, .34f, 0));
+            WorldText(content, "Glyph title", definition.title.ToUpperInvariant(), new Vector3(0, .07f, 0), 1.05f, .11f, ink.color);
             WorldText(content, "Hidden digit", definition.digit, new Vector3(0, -.12f, 0), .34f, .27f, ink.color);
             string relation = definition.relation;
             if (!string.IsNullOrEmpty(relation))
@@ -298,26 +417,52 @@ namespace RayOEZoning.Editor
 
         static void Cover(Transform root, int side, float z, string number)
         {
-            var cover = Solid(root, "Sight break " + number, new Vector3(side * 1.3f, 1.3f, z), new Vector3(1.4f, 2.6f, .7f), dark);
-            Primitive(cover.transform, "Brushed access face", PrimitiveType.Cube, new Vector3(0, .02f, -.507f), new Vector3(.88f, .90f, .025f), steel, false);
-            Primitive(cover.transform, "Quiet indicator", PrimitiveType.Cube, new Vector3(-.30f, .40f, -.53f), new Vector3(.016f, .055f, .015f), cyan, false);
+            // Same tested opaque AABB as the former slabs, now recognizable rack equipment.
+            var cabinet = Child(root, "Server cabinet R" + number); cabinet.position = new Vector3(side * 1.3f, 0, z);
+            Solid(cabinet, "Opaque server chassis", new Vector3(0, 1.3f, 0), new Vector3(1.4f, 2.6f, .7f), navy);
+            Primitive(cabinet, "Rack top cap", PrimitiveType.Cube, new Vector3(0, 2.55f, 0), new Vector3(1.4f, .10f, .7f), pale, false);
+            Primitive(cabinet, "Rack kick plate", PrimitiveType.Cube, new Vector3(0, .10f, 0), new Vector3(1.4f, .20f, .7f), dark, false);
+            for (int face = -1; face <= 1; face += 2)
+            {
+                Primitive(cabinet, "Recessed equipment door", PrimitiveType.Cube, new Vector3(0, 1.34f, face * .354f), new Vector3(1.22f, 2.17f, .018f), black, false);
+                for (int slot = 0; slot < 10; slot++)
+                {
+                    float y = .48f + slot * .183f;
+                    Primitive(cabinet, "Server blade " + slot, PrimitiveType.Cube, new Vector3(0, y, face * .37f), new Vector3(1.08f, .143f, .018f), serverFace, false);
+                    Primitive(cabinet, "Blade vent", PrimitiveType.Cube, new Vector3(-.05f, y, face * .383f), new Vector3(.70f, .032f, .012f), black, false);
+                    Primitive(cabinet, "Server activity indicator", PrimitiveType.Cube, new Vector3(.455f, y, face * .386f), new Vector3(.018f, .018f, .01f), slot % 4 == 0 ? cyan : label, false);
+                }
+                var plate = Child(cabinet, "Rack service ID"); plate.localPosition = new Vector3(0, 2.38f, face * .382f);
+                if (face > 0) plate.localRotation = Quaternion.Euler(0, 180, 0);
+                WorldText(plate, "Rack equipment label", "EDGE SERVER / R" + number, Vector3.zero, .99f, .071f, label.color);
+                WorldText(plate, "Rack equipment role", "SECURITY NETWORK", new Vector3(0, -.106f, 0), .99f, .038f, new Color(.38f, .54f, .58f));
+            }
         }
         static Light[] Lighting(Transform root)
         {
             var lighting = Child(root, "Annex lighting");
             RenderSettings.skybox = null; RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(.035f, .055f, .065f); RenderSettings.ambientEquatorColor = new Color(.016f, .026f, .030f);
-            RenderSettings.ambientGroundColor = new Color(.009f, .014f, .016f); RenderSettings.ambientIntensity = .5f;
+            RenderSettings.ambientSkyColor = new Color(.028f, .048f, .065f); RenderSettings.ambientEquatorColor = new Color(.014f, .025f, .035f);
+            RenderSettings.ambientGroundColor = new Color(.009f, .014f, .021f); RenderSettings.ambientIntensity = .6f;
             RenderSettings.fog = true; RenderSettings.fogMode = FogMode.ExponentialSquared; RenderSettings.fogDensity = .025f;
             RenderSettings.fogColor = new Color(.035f, .06f, .068f);
             var lamps = new List<Light>();
-            for (int i = 0; i < 9; i++)
+            for (int i = 0; i < 8; i++)
             {
-                var go = Child(lighting, "Ceiling pool " + i); go.position = new Vector3(0, 3.95f, 1 + i * 3.2f); go.rotation = Quaternion.Euler(90, 0, 0);
+                var go = Child(lighting, "Service ceiling pool " + i); go.position = new Vector3(0, 3.94f, 1.4f + i * 3.5f); go.rotation = Quaternion.Euler(90, 0, 0);
                 var light = go.gameObject.AddComponent<Light>(); light.type = LightType.Spot; light.range = 7;
-                light.spotAngle = 102; light.innerSpotAngle = 58; light.intensity = 1.45f;
-                light.color = i % 3 == 0 ? new Color(.49f, .72f, .77f) : new Color(.62f, .75f, .72f);
-                light.shadows = i % 2 == 0 ? LightShadows.Soft : LightShadows.None; lamps.Add(light);
+                light.spotAngle = 96; light.innerSpotAngle = 60; light.intensity = i == 7 ? 2.4f : 2.0f;
+                light.color = new Color(.66f, .80f, .85f);
+                light.shadows = i == 1 || i == 5 ? LightShadows.Soft : LightShadows.None; lamps.Add(light);
+            }
+            // Soft reflected service light keeps equipment faces legible below the ceiling pools.
+            // This is visual fill only: camera visibility continues to use real obstruction rays.
+            foreach (float z in new[] { 2.2f, 8.2f, 16.1f, 21.2f, 26.0f })
+            {
+                var go = Child(lighting, "Reflected service fill"); go.position = new Vector3(0, 2.25f, z);
+                var fill = go.gameObject.AddComponent<Light>(); fill.type = LightType.Point; fill.range = 4.2f;
+                fill.intensity = .62f; fill.color = new Color(.59f, .76f, .86f); fill.shadows = LightShadows.None;
+                lamps.Add(fill);
             }
             for (int i = 0; i < 3; i++)
             {
@@ -325,7 +470,7 @@ namespace RayOEZoning.Editor
                 var probe = go.gameObject.AddComponent<ReflectionProbe>(); probe.mode = ReflectionProbeMode.Realtime;
                 probe.refreshMode = ReflectionProbeRefreshMode.OnAwake; probe.timeSlicingMode = ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
                 probe.size = new Vector3(4.1f, 4.2f, 11); probe.resolution = 128; probe.boxProjection = true;
-                probe.clearFlags = ReflectionProbeClearFlags.SolidColor; probe.backgroundColor = RenderSettings.fogColor; probe.intensity = .65f;
+                probe.clearFlags = ReflectionProbeClearFlags.SolidColor; probe.backgroundColor = RenderSettings.fogColor; probe.intensity = .45f;
             }
             return lamps.ToArray();
         }
@@ -375,6 +520,11 @@ namespace RayOEZoning.Editor
                 material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT"); material.renderQueue = (int)RenderQueue.Transparent;
             }
             EditorUtility.SetDirty(material); return material;
+        }
+        static void EmissionFloor(Material material, Color color)
+        {
+            material.EnableKeyword("_EMISSION"); material.SetColor("_EmissionColor", color);
+            material.SetFloat("_Smoothness", .34f); EditorUtility.SetDirty(material);
         }
         static void StripLegacy(GameObject go)
         {

@@ -225,12 +225,12 @@ namespace RayOEZoning
             {
                 ExitUnlocked = true;
                 KeypadInput = string.Empty;
-                SetNotice("EXIT GRID DISABLED");
+                SetNotice("ARCHIVE SECURITY RELEASED");
                 SetMode(GameMode.Playing);
                 return true;
             }
 
-            SetNotice("ACCESS DENIED");
+            SetNotice("MAINTENANCE OVERRIDE REJECTED");
             Changed?.Invoke();
             return false;
         }
@@ -430,7 +430,7 @@ namespace RayOEZoning
             }
 
             notes.Add(definition);
-            SetNotice("FIELD NOTE RECORDED");
+            SetNotice("MAINTENANCE STENCIL RECORDED");
             Changed?.Invoke();
         }
 
@@ -453,15 +453,15 @@ namespace RayOEZoning
                     Transform anchor = clue.anchor != null ? clue.anchor : clue.transform;
                     bool closeEnough = playerCamera != null &&
                         Vector3.Distance(playerCamera.transform.position, anchor.position) <= 3f;
-                    Prompt = !closeEnough ? "Move closer to read the marking" :
-                        clue.ReadProgress > 0f ? "Hold steady to record field note" : "Aim the light and hold steady";
+                    Prompt = !closeEnough ? "Move closer to read the maintenance stencil" :
+                        clue.ReadProgress > 0f ? "Hold steady to transcribe the maintenance stencil" : "Aim the inspection light and hold steady";
                     return;
                 }
             }
 
             if (!ExitUnlocked && IsNearKeypad())
             {
-                Prompt = "E — Inspect keypad";
+                Prompt = "E — Use archive terminal";
                 return;
             }
 

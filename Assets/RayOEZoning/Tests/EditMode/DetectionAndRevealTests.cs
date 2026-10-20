@@ -81,6 +81,34 @@ namespace RayOEZoning.Tests
         }
 
         [Test]
+        public void MountedCameraSeesOverLowCoverButTallCoverBreaksSight()
+        {
+            var detector = Detector(DetectionShape.Sphere, new Vector3(1, 0, 0));
+            var cover = Object("Server cover");
+            cover.layer = 28;
+            cover.transform.position = new Vector3(.5f, .75f, 0);
+            var solid = cover.AddComponent<BoxCollider>();
+            solid.size = new Vector3(.15f, 1.5f, 4);
+            Physics.SyncTransforms();
+            Assert.That(detector.Evaluate(), Is.False, "The default lower sensor is occluded.");
+
+            var lens = Object("Rail camera lens");
+            lens.transform.SetParent(detector.transform, false);
+            lens.transform.localPosition = Vector3.up * 1.75f;
+            detector.rayOrigin = lens.transform;
+            Assert.That(detector.Evaluate(), Is.True, "The actual elevated lens sees over low cover.");
+            Assert.That(detector.HasPlayerOverlap, Is.True);
+            Assert.That(detector.LastRayOrigin, Is.EqualTo(lens.transform.position));
+
+            cover.transform.position = new Vector3(.5f, 1.5f, 0);
+            solid.size = new Vector3(.15f, 3f, 4);
+            Physics.SyncTransforms();
+            Assert.That(detector.Evaluate(), Is.False, "Tall cabinets must block both sight rays.");
+            Assert.That(detector.HasPlayerOverlap, Is.True, "Cover affects sight, not the spatial query.");
+            Assert.That(detector.LastRayBlocked, Is.True);
+        }
+
+        [Test]
         public void BoxUsesOrientedExtentsRatherThanSphereApproximation()
         {
             var detector = Detector(DetectionShape.Box, new Vector3(2.4f, 0, 0));

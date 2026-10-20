@@ -4,15 +4,18 @@ using UnityEngine.Rendering;
 
 namespace RayOEZoning
 {
-    /// <summary>Authored scanner light outlines, built from the detector's actual physics dimensions.</summary>
+    /// <summary>CCTV zone footprints for play; exact physics geometry appears only in diagnostic view.</summary>
     public sealed class ScannerVisual : MonoBehaviour
     {
         public HazardDetector detector;
         public StealthGame game;
         public Material lineMaterial;
         public Renderer lens;
+        public Renderer[] statusLights;
         public Light lamp;
         readonly List<LineRenderer> lines = new List<LineRenderer>();
+        readonly List<LineRenderer> footprints = new List<LineRenderer>();
+        bool buildingFootprint;
         LineRenderer ray;
         MaterialPropertyBlock block;
         void Start()
@@ -56,8 +59,45 @@ namespace RayOEZoning
                 CapsuleArc(a, -axis, u); CapsuleArc(a, -axis, v);
                 CapsuleArc(b, axis, u); CapsuleArc(b, axis, v);
             }
+            buildingFootprint = true;
+            BuildFootprint();
+            buildingFootprint = false;
             ray = Line(new[] { Vector3.zero, Vector3.zero }, false); ray.useWorldSpace = true;
             block = new MaterialPropertyBlock();
+        }
+
+        void BuildFootprint()
+        {
+            float y = .025f - detector.home.y;
+            if (detector.shape == DetectionShape.Sphere)
+                Circle(new Vector3(0, y, 0), Vector3.right, Vector3.forward, detector.radius);
+            else if (detector.shape == DetectionShape.Box)
+            {
+                var e = detector.halfExtents;
+                for (int x = -1; x <= 1; x += 2)
+                    for (int z = -1; z <= 1; z += 2)
+                        Line(new[] {
+                            new Vector3(x * (e.x - .34f), y, z * e.z),
+                            new Vector3(x * e.x, y, z * e.z),
+                            new Vector3(x * e.x, y, z * (e.z - .34f))
+                        }, false);
+            }
+            else
+            {
+                Vector3 a = detector.capsulePointA, b = detector.capsulePointB;
+                a.y = b.y = y;
+                Vector3 axis = (b - a).normalized;
+                Vector3 u = Vector3.Cross(Vector3.up, axis).normalized;
+                var points = new Vector3[66];
+                for (int i = 0; i <= 32; i++)
+                {
+                    float angle = i * Mathf.PI / 32;
+                    points[i] = a + (Mathf.Cos(angle) * u - Mathf.Sin(angle) * axis) * detector.radius;
+                    angle += Mathf.PI;
+                    points[33 + i] = b + (Mathf.Cos(angle) * u - Mathf.Sin(angle) * axis) * detector.radius;
+                }
+                Line(points, true);
+            }
         }
         void CapsuleArc(Vector3 center, Vector3 outward, Vector3 radial)
         {
@@ -86,22 +126,34 @@ namespace RayOEZoning
             line.useWorldSpace = false; line.loop = loop; line.positionCount = points.Length; line.SetPositions(points);
             line.startWidth = line.endWidth = .009f; line.shadowCastingMode = ShadowCastingMode.Off;
             line.receiveShadows = false; line.numCornerVertices = 2; line.numCapVertices = 2;
-            lines.Add(line); return line;
+            if (buildingFootprint) footprints.Add(line); else lines.Add(line);
+            return line;
         }
         void LateUpdate()
         {
             if (!detector || block == null) return;
             bool diagnostic = game && game.Diagnostics;
-            Color color = detector.IsDetecting ? new Color(1, .31f, .17f, .65f) : new Color(.81f, .51f, .17f, diagnostic ? .85f : .27f);
+            Color color = detector.IsDetecting ? new Color(1, .31f, .17f, .70f) : new Color(.88f, .54f, .16f, .65f);
             block.SetColor("_BaseColor", color); block.SetColor("_Color", color);
             foreach (var line in lines)
             {
+                line.enabled = diagnostic;
                 line.SetPropertyBlock(block); line.startColor = line.endColor = Color.white;
-                line.startWidth = line.endWidth = diagnostic ? .018f : .009f;
+                line.startWidth = line.endWidth = .016f;
             }
-            if (lamp) { lamp.color = color; lamp.intensity = detector.IsDetecting ? .52f : .24f; }
-            ray.enabled = diagnostic;
-            if (diagnostic)
+            Color floorColor = detector.IsDetecting ? new Color(1, .31f, .17f, .45f) : new Color(.88f, .54f, .16f, .26f);
+            block.SetColor("_BaseColor", floorColor); block.SetColor("_Color", floorColor);
+            foreach (var footprint in footprints)
+            {
+                footprint.SetPropertyBlock(block); footprint.startWidth = footprint.endWidth = .018f;
+            }
+            Color opticColor = detector.IsDetecting ? new Color(1, .22f, .13f, 1) : new Color(.95f, .48f, .12f, 1);
+            block.SetColor("_BaseColor", opticColor); block.SetColor("_Color", opticColor);
+            if (statusLights != null) foreach (var optic in statusLights) if (optic) optic.SetPropertyBlock(block);
+            if (lens) lens.SetPropertyBlock(block);
+            if (lamp) { lamp.color = opticColor; lamp.intensity = detector.IsDetecting ? .32f : .15f; }
+            ray.enabled = diagnostic && detector.HasPlayerOverlap;
+            if (ray.enabled)
             {
                 ray.SetPosition(0, detector.LastRayOrigin); ray.SetPosition(1, detector.LastRayTarget);
                 var rayBlock = new MaterialPropertyBlock();

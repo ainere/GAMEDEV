@@ -31,6 +31,8 @@ namespace RayOEZoning.Tests
             foreach (var hazard in game.hazards)
             {
                 Assert.That(hazard.player, Is.EqualTo(game.body.transform));
+                Assert.That(hazard.rayOrigin, Is.Not.Null, "The surveillance lens must supply its actual sight origin.");
+                Assert.That(hazard.rayOrigin.IsChildOf(hazard.transform), Is.True);
                 Assert.That(hazard.playerMask.value & (1 << game.body.gameObject.layer), Is.Not.Zero);
                 Assert.That(hazard.obstructionMask.value & hazard.playerMask.value, Is.Zero);
             }
