@@ -8,6 +8,8 @@ namespace RayOEZoning
     {
         public Renderer lampGlass;
         public Transform poseRoot;
+        /// <summary>The torch reaches its full intensity on surfaces this far away.</summary>
+        const float FullBrightnessDistance = 6f;
         StealthGame game;
         MaterialPropertyBlock block;
         float maximumIntensity;
@@ -35,18 +37,20 @@ namespace RayOEZoning
                     Mathf.Cos(gait * 2) * .004f * movement - (sprinting ? .035f : 0), prone ? .025f : 0);
                 poseRoot.localPosition = Vector3.Lerp(poseRoot.localPosition, restPosition + offset, Time.deltaTime * 14);
             }
-            // Proximity exposure keeps the nearby stencil surface from washing out to white.
+            // Auto-exposure: scale with distance squared so whatever the beam lands on is lit about as brightly at
+            // arm's length as at 6 m, and paper close up never washes out to white.
             // Illumination origin, angle, range, on/off state and puzzle tests remain in StealthGame.
             if (game && game.torch && game.torchOrigin)
             {
-                float intensity = maximumIntensity;
+                float target = maximumIntensity;
                 if (Physics.Raycast(game.torchOrigin.position, game.torchOrigin.forward, out RaycastHit hit,
                         game.torch.range, (1 << 8) | 1, QueryTriggerInteraction.Ignore))
-                    {
-                    float distance = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.4f, 6f, hit.distance));
-                    intensity = Mathf.Lerp(maximumIntensity * .1f, maximumIntensity, distance);
+                {
+                    float distance = hit.distance / FullBrightnessDistance;
+                    target = maximumIntensity * Mathf.Clamp(distance * distance, .015f, 1f);
                 }
-                game.torch.intensity = intensity;
+                float blend = Application.isPlaying ? 1 - Mathf.Exp(-Time.deltaTime * 10) : 1;
+                game.torch.intensity = Mathf.Lerp(game.torch.intensity, target, blend);
             }
         }
     }

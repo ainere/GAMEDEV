@@ -22,7 +22,7 @@ namespace RayOEZoning.Editor
         // Optics and light
         static Material glass, glassTint, amberGlass, lensGlass, cameraShell, cameraDark, fixtureOff, nightPanel, ledGreen, ledBlue, ledAmber, recording, laser, laserHousing, sampleGlow, coldInterior;
         // Screens and signs
-        static Material screenGraph, screenFeed, screenMolecule, screenWave, signExit, signCold, signLab, signSecure, signCctv, hazardStripe;
+        static Material screenGraph, screenFeed, screenMolecule, screenWave, signExit, signCctv, hazardStripe;
         // Player
         static Material glove, sleeve, trousers;
         // Clue surfaces and their inks
@@ -87,9 +87,6 @@ namespace RayOEZoning.Editor
             screenMolecule = Screen("Monitor molecule", ScreenTexture("Monitor molecule", 2), 1.5f);
             screenWave = Screen("Monitor waveform", ScreenTexture("Monitor waveform", 3), 1.6f);
             signExit = Screen("Sign exit", SignTexture("Sign exit", 0), 1.8f);
-            signCold = Screen("Sign cold storage", SignTexture("Sign cold storage", 1), .9f);
-            signLab = Screen("Sign laboratory", SignTexture("Sign laboratory", 2), .9f);
-            signSecure = Screen("Sign secure", SignTexture("Sign secure", 3), .9f);
             signCctv = Lit("Sign surveillance", Color.white, .3f, 0, SignTexture("Sign surveillance", 4));
             hazardStripe = Lit("Hazard stripe", Color.white, .35f, 0, SignTexture("Hazard stripe", 5));
 
@@ -106,18 +103,19 @@ namespace RayOEZoning.Editor
             clipboardBoard = Lit("Clipboard", new Color(.34f, .23f, .13f), .3f);
             tape = Lit("Masking tape", new Color(.78f, .72f, .56f), .2f);
             torchLens = Unlit("Flashlight lens", new Color(.03f, .03f, .03f));
-            // Dark inks are unlit so the flashlight's hotspot cannot wash them out to grey.
-            inkBallpoint = Unlit("Ink ballpoint", new Color(.02f, .05f, .26f));
-            inkPencil = Unlit("Ink pencil", new Color(.11f, .11f, .12f));
-            inkMarker = Unlit("Ink marker", new Color(.01f, .01f, .012f));
-            inkMarkerRed = Lit("Ink marker red", new Color(.62f, .04f, .04f), 0);
+            // Hidden writing uses the RevealInk shader: it exists only where the flashlight cone falls, and being
+            // unlit, the hotspot cannot wash dark ink out to grey.
+            inkBallpoint = Ink("Ink ballpoint", new Color(.02f, .05f, .26f));
+            inkPencil = Ink("Ink pencil", new Color(.09f, .09f, .1f));
+            inkMarker = Ink("Ink marker", new Color(.01f, .01f, .012f));
+            inkMarkerRed = Ink("Ink marker red", new Color(.55f, .03f, .03f));
             inkWhiteboard = Lit("Ink marker blue", new Color(.05f, .12f, .45f), 0);
-            inkPaint = Lit("Ink stencil paint", new Color(.9f, .74f, .16f), 0);
-            inkScreen = Unlit("Ink screen", new Color(.3f, 1.5f, .6f));
-            inkLcd = Unlit("Ink LCD", new Color(.015f, .03f, .015f));
-            inkLabel = Unlit("Ink label", new Color(.85f, .85f, .82f));
-            inkEngrave = Unlit("Ink engraving", new Color(.8f, .83f, .8f));
-            inkPrint = Unlit("Ink print", new Color(.015f, .015f, .02f));
+            inkPaint = Ink("Ink stencil paint", new Color(.95f, .76f, .16f));
+            inkScreen = Ink("Ink screen", new Color(.3f, 1.5f, .6f));
+            inkLcd = Ink("Ink LCD", new Color(.015f, .03f, .015f));
+            inkLabel = Ink("Ink label", new Color(.9f, .9f, .86f));
+            inkEngrave = Ink("Ink engraving", new Color(.86f, .88f, .85f));
+            inkPrint = Ink("Ink print", new Color(.015f, .015f, .02f));
             line = Unlit("Scanning outline", new Color(.82f, .90f, .95f, .22f), true);
             line.SetFloat("_Cull", (float)CullMode.Off);
             shaft = ShaftMaterial();
@@ -170,6 +168,15 @@ namespace RayOEZoning.Editor
             material.SetColor("_BaseColor", color);
             if (transparent) Transparent(material);
             else { material.SetFloat("_Surface", 0); material.renderQueue = -1; }
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        static Material Ink(string name, Color color)
+        {
+            var material = Asset(name, "RayOEZoning/Reveal Ink");
+            material.SetColor("_BaseColor", color);
+            material.renderQueue = (int)RenderQueue.Transparent;
             EditorUtility.SetDirty(material);
             return material;
         }
@@ -459,8 +466,7 @@ namespace RayOEZoning.Editor
                         if (((x + y) / 64) % 2 == 1) stripes.Set(x, y, new Color(.05f, .05f, .05f));
                 return stripes.Save(name, true);
             }
-            Color background = kind == 0 ? new Color(.05f, .55f, .25f) : kind == 1 ? new Color(.10f, .35f, .65f) :
-                kind == 2 ? new Color(.06f, .44f, .43f) : kind == 3 ? new Color(.85f, .50f, .06f) : new Color(.96f, .80f, .10f);
+            Color background = kind == 0 ? new Color(.05f, .55f, .25f) : new Color(.96f, .80f, .10f);
             var canvas = new Canvas(256, 256, background);
             Color ink = kind == 4 ? new Color(.06f, .06f, .06f) : white;
             if (kind == 0)
@@ -477,35 +483,6 @@ namespace RayOEZoning.Editor
                 canvas.Box(new Vector2(156, 76), new Vector2(172, 194), background);
                 canvas.Capsule(new Vector2(186, 136), new Vector2(222, 136), 6, ink);
                 canvas.Polyline(new[] { new Vector2(206, 154), new Vector2(224, 136), new Vector2(206, 118) }, 12, ink);
-            }
-            else if (kind == 1)
-            {
-                Vector2 c = new Vector2(128, 128);
-                for (int i = 0; i < 6; i++)
-                {
-                    float a = i * Mathf.PI / 3;
-                    Vector2 d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                    canvas.Capsule(c, c + d * 88, 7, ink);
-                    Vector2 n = new Vector2(-d.y, d.x);
-                    canvas.Capsule(c + d * 55, c + d * 78 + n * 20, 5, ink);
-                    canvas.Capsule(c + d * 55, c + d * 78 - n * 20, 5, ink);
-                }
-                canvas.Ring(c, 26, 8, ink);
-            }
-            else if (kind == 2)
-            {
-                canvas.Polyline(new[] { new Vector2(110, 210), new Vector2(110, 140), new Vector2(64, 60), new Vector2(192, 60), new Vector2(146, 140), new Vector2(146, 210) }, 12, ink);
-                canvas.Capsule(new Vector2(98, 210), new Vector2(158, 210), 6, ink);
-                canvas.Box(new Vector2(80, 66), new Vector2(176, 96), ink, 4);
-                canvas.Circle(new Vector2(118, 116), 7, ink); canvas.Circle(new Vector2(140, 130), 5, ink);
-            }
-            else if (kind == 3)
-            {
-                canvas.Box(new Vector2(70, 50), new Vector2(186, 140), ink, 10);
-                canvas.Ring(new Vector2(128, 152), 38, 16, ink);
-                canvas.Box(new Vector2(70, 140), new Vector2(186, 152), background);
-                canvas.Box(new Vector2(86, 140), new Vector2(104, 152), ink); canvas.Box(new Vector2(152, 140), new Vector2(170, 152), ink);
-                canvas.Circle(new Vector2(128, 102), 12, background); canvas.Box(new Vector2(122, 70), new Vector2(134, 100), background);
             }
             else
             {

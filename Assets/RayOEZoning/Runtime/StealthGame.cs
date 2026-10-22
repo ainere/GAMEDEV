@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,7 +7,6 @@ namespace RayOEZoning
     public enum GameMode
     {
         Playing,
-        Notebook,
         Keypad,
         Paused,
         Caught,
@@ -46,14 +44,11 @@ namespace RayOEZoning
         public float PatrolTime { get; private set; }
         public bool Diagnostics { get; private set; }
         public bool CanUseKeypad => Mode == GameMode.Playing && !ExitUnlocked && IsNearKeypad();
-        public IReadOnlyList<ClueDefinition> Notes => notesView;
         /// <summary>This run's code and clues. Falls back to the fixed classic puzzle when nothing has rolled one.</summary>
         public PuzzleRun Puzzle => puzzle ?? PuzzleCatalog.Classic;
 
         public event System.Action Changed;
 
-        private readonly List<ClueDefinition> notes = new List<ClueDefinition>();
-        private IReadOnlyList<ClueDefinition> notesView;
         private PuzzleRun puzzle;
         private PlayerInput playerInput;
         private float noticeRemaining;
@@ -99,7 +94,6 @@ namespace RayOEZoning
                 hasSpawnPose = true;
             }
 
-            notesView = notes.AsReadOnly();
             if (controller != null)
             {
                 controller.MoveSpeed = 2.2f;
@@ -135,8 +129,6 @@ namespace RayOEZoning
             {
                 if (keyboard.fKey.wasPressedThisFrame)
                     ToggleTorch();
-                if (keyboard.nKey.wasPressedThisFrame)
-                    ToggleNotebook();
                 if (keyboard.eKey.wasPressedThisFrame)
                     TryOpenKeypad();
             }
@@ -151,10 +143,9 @@ namespace RayOEZoning
                 if (keyboard.escapeKey.wasPressedThisFrame)
                     CloseOverlay();
             }
-            else if (Mode == GameMode.Notebook || Mode == GameMode.Paused)
+            else if (Mode == GameMode.Paused)
             {
-                if (keyboard.escapeKey.wasPressedThisFrame ||
-                    (Mode == GameMode.Notebook && keyboard.nKey.wasPressedThisFrame))
+                if (keyboard.escapeKey.wasPressedThisFrame)
                     CloseOverlay();
             }
 
@@ -171,9 +162,8 @@ namespace RayOEZoning
 
         private void LateUpdate()
         {
-            // LateUpdate refreshes visibility with this render frame's final camera direction. Read
-            // progress is advanced in Advance so behavior tests and the fixed-step game share a path.
-            UpdateClues(0f);
+            // LateUpdate refreshes visibility with this render frame's final camera direction.
+            UpdateClues();
             UpdatePrompt();
         }
 
@@ -182,7 +172,6 @@ namespace RayOEZoning
         {
             puzzle = run;
             clues = active;
-            notes.Clear();
             KeypadInput = string.Empty;
             Changed?.Invoke();
         }
@@ -192,14 +181,6 @@ namespace RayOEZoning
             Mode = mode;
             ApplyModeState();
             Changed?.Invoke();
-        }
-
-        public void ToggleNotebook()
-        {
-            if (Mode == GameMode.Playing)
-                SetMode(GameMode.Notebook);
-            else if (Mode == GameMode.Notebook)
-                CloseOverlay();
         }
 
         public void OpenKeypad()
@@ -215,7 +196,7 @@ namespace RayOEZoning
 
         public void CloseOverlay()
         {
-            if (Mode == GameMode.Notebook || Mode == GameMode.Keypad || Mode == GameMode.Paused)
+            if (Mode == GameMode.Keypad || Mode == GameMode.Paused)
                 SetMode(GameMode.Playing);
         }
 
@@ -290,13 +271,11 @@ namespace RayOEZoning
                 stance.ResetStance();
 
             SetPatrols(0f);
-            ResetClueReading();
             SetMode(GameMode.Playing);
         }
 
         public void NewGame()
         {
-            notes.Clear();
             if (director)
                 director.Reroll();
             Retry();
@@ -372,7 +351,7 @@ namespace RayOEZoning
                 return;
             }
 
-            UpdateClues(step);
+            UpdateClues();
 
             if (ExitUnlocked && body != null && body.transform.position.z >= escapeZ)
             {
@@ -433,91 +412,28 @@ namespace RayOEZoning
             }
         }
 
-        private void UpdateClues(float dt)
+        private void UpdateClues()
         {
             if (torch != null && playerCamera != null)
             {
                 Transform emitter = torchOrigin ? torchOrigin : playerCamera.transform;
                 torch.transform.SetPositionAndRotation(emitter.position, emitter.rotation);
             }
+            RevealInk.Push(torch, TorchOn);
             if (clues == null)
                 return;
 
             for (int i = 0; i < clues.Length; i++)
             {
-                HiddenClue clue = clues[i];
-                if (clue == null)
-                    continue;
-
-                bool read = clue.Evaluate(playerCamera, TorchOn, torch ? torch.range : 8f,
-                    torch ? torch.spotAngle : 50f, dt, torch ? torch.transform : null);
-                if (read && Mode == GameMode.Playing)
-                    RecordClue(clue.clueIndex);
+                if (clues[i] != null)
+                    clues[i].Evaluate(TorchOn, torch ? torch.range : 8f, torch ? torch.spotAngle : 50f,
+                        torch ? torch.transform : playerCamera ? playerCamera.transform : null);
             }
-        }
-
-        private void RecordClue(int clueIndex)
-        {
-            if (clueIndex < 0 || clueIndex >= Puzzle.clues.Length)
-                return;
-
-            ClueDefinition definition = Puzzle.clues[clueIndex];
-            for (int i = 0; i < notes.Count; i++)
-            {
-                if (notes[i].id == definition.id)
-                    return;
-            }
-
-            notes.Add(definition);
-            SetNotice("Noted");
-            Changed?.Invoke();
         }
 
         private void UpdatePrompt()
         {
-            if (Mode != GameMode.Playing)
-            {
-                Prompt = string.Empty;
-                return;
-            }
-
-            if (clues != null)
-            {
-                for (int i = 0; i < clues.Length; i++)
-                {
-                    HiddenClue clue = clues[i];
-                    if (clue == null || !clue.IsInSight || IsClueRecorded(clue.clueIndex))
-                        continue;
-
-                    Transform anchor = clue.anchor != null ? clue.anchor : clue.transform;
-                    bool closeEnough = playerCamera != null &&
-                        Vector3.Distance(playerCamera.transform.position, anchor.position) <= 3f;
-                    Prompt = !closeEnough ? "Move closer to read" :
-                        clue.ReadProgress > 0f ? "Hold steady" : "Hold the light steady to read";
-                    return;
-                }
-            }
-
-            if (!ExitUnlocked && IsNearKeypad())
-            {
-                Prompt = "E  Use terminal";
-                return;
-            }
-
-            Prompt = string.Empty;
-        }
-
-        public bool IsClueRecorded(int clueIndex)
-        {
-            if (clueIndex < 0 || clueIndex >= Puzzle.clues.Length)
-                return false;
-            string id = Puzzle.clues[clueIndex].id;
-            for (int i = 0; i < notes.Count; i++)
-            {
-                if (notes[i].id == id)
-                    return true;
-            }
-            return false;
+            Prompt = Mode == GameMode.Playing && !ExitUnlocked && IsNearKeypad() ? "E  Use terminal" : string.Empty;
         }
 
         private bool IsNearKeypad()
@@ -549,17 +465,6 @@ namespace RayOEZoning
                     AppendDigit(i.ToString());
                     break;
                 }
-            }
-        }
-
-        private void ResetClueReading()
-        {
-            if (clues == null)
-                return;
-            for (int i = 0; i < clues.Length; i++)
-            {
-                if (clues[i] != null)
-                    clues[i].ResetReading();
             }
         }
 

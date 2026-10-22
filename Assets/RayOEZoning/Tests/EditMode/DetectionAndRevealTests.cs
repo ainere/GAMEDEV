@@ -296,18 +296,19 @@ namespace RayOEZoning.Tests
         public void ClueRequiresTorchConeRangeAndClearSightEveryFrame()
         {
             var clue = Clue(out var camera);
-            clue.Evaluate(camera, true, 8, 50, .02f);
+            var lamp = camera.transform;
+            clue.Evaluate(true, 8, 50, lamp);
             Assert.That(clue.IsVisible, Is.True);
-            clue.Evaluate(camera, false, 8, 50, .02f);
+            clue.Evaluate(false, 8, 50, lamp);
             Assert.That(clue.IsVisible, Is.False);
             Assert.That(clue.hiddenRenderers[0].enabled, Is.False);
             Assert.That(clue.hiddenRenderers[0].shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
             camera.transform.rotation = Quaternion.Euler(0, 90, 0);
-            clue.Evaluate(camera, true, 8, 50, .02f);
+            clue.Evaluate(true, 8, 50, lamp);
             Assert.That(clue.IsVisible, Is.False);
             camera.transform.rotation = Quaternion.identity;
             clue.transform.position = new Vector3(0, 0, 9);
-            clue.Evaluate(camera, true, 8, 50, .02f);
+            clue.Evaluate(true, 8, 50, lamp);
             Assert.That(clue.IsVisible, Is.False);
             clue.transform.position = new Vector3(0, 0, 2);
             var blocker = Object("Solid obstruction");
@@ -315,7 +316,7 @@ namespace RayOEZoning.Tests
             blocker.transform.position = new Vector3(0, 0, 1);
             blocker.AddComponent<BoxCollider>().size = new Vector3(2, 2, .2f);
             Physics.SyncTransforms();
-            clue.Evaluate(camera, true, 8, 50, .02f);
+            clue.Evaluate(true, 8, 50, lamp);
             Assert.That(clue.IsVisible, Is.False);
         }
 
@@ -334,41 +335,35 @@ namespace RayOEZoning.Tests
             collider.size = new Vector3(.2f, 2, .2f);
             Physics.SyncTransforms();
 
-            clue.Evaluate(camera, true, 8, 60, .02f);
-            Assert.That(clue.IsVisible, Is.False, "The camera ray hits the obstacle directly ahead.");
+            clue.Evaluate(true, 8, 60, camera.transform);
+            Assert.That(clue.IsVisible, Is.False, "A lamp at the eye would be blocked by the obstacle directly ahead.");
             emitter.rotation = Quaternion.Euler(0, 90, 0);
-            clue.Evaluate(camera, true, 8, 60, .02f, emitter);
+            clue.Evaluate(true, 8, 60, emitter);
             Assert.That(clue.IsVisible, Is.False, "The emitter's own forward direction controls its cone.");
             emitter.rotation = Quaternion.identity;
-            clue.Evaluate(camera, true, 8, 60, .02f, emitter);
+            clue.Evaluate(true, 8, 60, emitter);
             Assert.That(clue.IsVisible, Is.True,
                 "The offset muzzle ray passes beside the camera-only obstacle and illuminates the clue.");
-            Assert.That(clue.IsInSight, Is.False, "Illumination cannot grant sight through camera-side cover.");
-            Assert.That(clue.Evaluate(camera, true, 8, 60, .81f, emitter), Is.False,
-                "A lit clue hidden from the player's eyes must not be transcribed through cover.");
-            Assert.That(clue.ReadProgress, Is.Zero);
 
             blocker.transform.position = new Vector3(.5f, 0, 1);
             Physics.SyncTransforms();
-            clue.Evaluate(camera, true, 8, 60, .02f, emitter);
+            clue.Evaluate(true, 8, 60, emitter);
             Assert.That(clue.IsVisible, Is.False, "An obstacle crossing the actual muzzle ray hides the clue.");
-            clue.Evaluate(camera, true, 8, 60, .02f);
-            Assert.That(clue.IsVisible, Is.True, "The camera-origin ray remains clear after moving the blocker.");
+            clue.Evaluate(true, 8, 60, camera.transform);
+            Assert.That(clue.IsVisible, Is.True, "The eye-line ray remains clear after moving the blocker.");
         }
 
         [Test]
-        public void NotebookReadRequiresContinuousCloseIllumination()
+        public void WritingWhoseEdgeIsLitStaysOnForThePerPixelReveal()
         {
             var clue = Clue(out var camera);
-            Assert.That(clue.Evaluate(camera, true, 8, 50, .4f), Is.False);
-            clue.Evaluate(camera, false, 8, 50, .1f);
-            Assert.That(clue.Evaluate(camera, true, 8, 50, .4f), Is.False,
-                "An interrupted glance cannot accumulate read time.");
-            Assert.That(clue.Evaluate(camera, true, 8, 50, .41f), Is.True);
-            clue.ResetReading();
-            clue.transform.position = new Vector3(0, 0, 4);
-            Assert.That(clue.Evaluate(camera, true, 8, 50, 2), Is.False,
-                "A visible clue beyond reading range cannot be automatically transcribed.");
+            // 27.7 degrees off axis: the centre is outside a 50 degree cone, but a 0.2 m wide sheet reaches into it.
+            clue.transform.position = new Vector3(1.05f, 0, 2);
+            Physics.SyncTransforms();
+            clue.radius = .2f;
+            Assert.That(clue.Evaluate(true, 8, 50, camera.transform), Is.True);
+            clue.radius = 0;
+            Assert.That(clue.Evaluate(true, 8, 50, camera.transform), Is.False);
         }
 
         [Test]

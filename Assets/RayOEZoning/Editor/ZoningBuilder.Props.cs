@@ -98,10 +98,10 @@ namespace RayOEZoning.Editor
         static void Shelving(Transform parent, Vector3 at, float yaw, float width, float height)
         {
             var shelf = Placed(parent, "Shelf", at, yaw);
-            Solid(shelf, null, new Vector3(0, height * .5f, 0), new Vector3(width, height, .05f), enamel);
+            Solid(shelf, null, new Vector3(0, height * .5f, 0), new Vector3(width - .06f, height, .05f), enamel);
             for (int x = -1; x <= 1; x += 2)
                 for (int z = -1; z <= 1; z += 2)
-                    Box(shelf, null, new Vector3(x * (width * .5f - .02f), height * .5f, z * .23f), new Vector3(.04f, height, .04f), steel);
+                    Box(shelf, null, new Vector3(x * (width * .5f - .025f), height * .5f, z * .23f), new Vector3(.04f, height, .04f), steel);
             Material[] binders = { binderBlue, binderRed, binderYellow, paper, plasticGrey };
             for (int level = 0; level < 5; level++)
             {
@@ -244,7 +244,7 @@ namespace RayOEZoning.Editor
             const float depth = .85f, height = 2.35f;
             Solid(hood, null, new Vector3(0, height * .5f, 0), new Vector3(width, height, depth), enamel, false);
             Box(hood, null, new Vector3(0, .43f, 0), new Vector3(width, .86f, depth), enamel);
-            Box(hood, null, new Vector3(0, .89f, .02f), new Vector3(width, .04f, depth - .02f), epoxy);
+            Box(hood, null, new Vector3(0, .89f, .02f), new Vector3(width + .01f, .04f, depth - .02f), epoxy);
             for (int side = -1; side <= 1; side += 2)
                 Box(hood, null, new Vector3(side * (width * .5f - .04f), 1.5f, 0), new Vector3(.08f, 1.2f, depth), enamel);
             Box(hood, null, new Vector3(0, 1.5f, -depth * .5f + .05f), new Vector3(width - .1f, 1.2f, .03f), stainless);
@@ -506,18 +506,7 @@ namespace RayOEZoning.Editor
             var lens = Cylinder(torch, null, new Vector3(0, 0, .1125f), .0205f, .002f, torchLens, AlongZ);
             Cylinder(torch, null, new Vector3(0, 0, -.093f), .018f, .018f, darkMetal, AlongZ);
             Cylinder(torch, null, new Vector3(0, 0, -.104f), .009f, .006f, rubber, AlongZ);
-            // Gloved fist closed round the rubber grip: fingers curl under the barrel, thumb lies along the top.
-            var glovedHand = Child(hand, "Hand");
-            Primitive(glovedHand, null, PrimitiveType.Sphere, new Vector3(.008f, -.012f, -.032f), new Vector3(.07f, .078f, .092f), glove, false);
-            for (int finger = 0; finger < 4; finger++)
-            {
-                float z = -.006f - finger * .0172f;
-                Limb(glovedHand, new Vector3(-.023f, -.004f, z), new Vector3(-.006f, -.033f, z - .002f), finger == 3 ? .0098f : .0108f, glove);
-            }
-            Limb(glovedHand, new Vector3(-.013f, .02f, -.06f), new Vector3(-.006f, .021f, -.014f), .0102f, glove);
-            Limb(glovedHand, new Vector3(.012f, -.022f, -.07f), new Vector3(.03f, -.048f, -.128f), .029f, glove);
-            Limb(glovedHand, new Vector3(.03f, -.048f, -.125f), new Vector3(.044f, -.066f, -.158f), .033f, rubber);
-            Limb(glovedHand, new Vector3(.044f, -.066f, -.16f), new Vector3(.15f, -.19f, -.42f), .045f, sleeve);
+            GlovedHand(hand);
             var muzzle = Child(hand, "Muzzle"); muzzle.localPosition = new Vector3(0, 0, .12f);
             muzzle.rotation = camera.rotation;
             var visual = hand.gameObject.AddComponent<HeldFlashlightVisual>(); visual.lampGlass = lens.GetComponent<Renderer>(); visual.poseRoot = hand;
@@ -525,17 +514,51 @@ namespace RayOEZoning.Editor
             SetLayer(hand.gameObject, PlayerLayer); return muzzle;
         }
 
+        /// <summary>
+        /// Right hand closed round the grip, seen from the barrel's front: the back of the hand lies along the right,
+        /// four three-joint fingers curl from the knuckles over the top and down the left, and the thumb runs forward
+        /// along the side. Points are (angle round the barrel, distance from its axis, position along it).
+        /// </summary>
+        static void GlovedHand(Transform parent)
+        {
+            var hand = Child(parent, "Hand");
+            Vector3 At(float degrees, float radius, float z) =>
+                new Vector3(Mathf.Cos(degrees * Mathf.Deg2Rad) * radius, Mathf.Sin(degrees * Mathf.Deg2Rad) * radius, z);
+            for (int finger = 0; finger < 4; finger++)
+            {
+                float z = -.006f - finger * .0182f, scale = finger == 3 ? .86f : finger == 0 ? .96f : 1f;
+                Vector3 knuckle = At(32, .035f, z), middle = At(102, .0285f, z - .001f);
+                Vector3 joint = At(168, .0275f, z - .002f), tip = At(finger == 3 ? 212 : 226, .027f, z - .003f);
+                Primitive(hand, null, PrimitiveType.Sphere, knuckle, Vector3.one * .023f * scale, glove, false);
+                Limb(hand, knuckle, middle, .0098f * scale, glove);
+                Limb(hand, middle, joint, .0093f * scale, glove);
+                Limb(hand, joint, tip, .0086f * scale, glove);
+            }
+            // Back of the hand: a rounded slab from the knuckle line down to the wrist.
+            Vector3 knuckles = At(32, .036f, -.033f), wrist = At(-58, .068f, -.04f);
+            var back = Primitive(hand, null, PrimitiveType.Capsule, (knuckles + wrist) * .5f + new Vector3(.006f, 0, 0),
+                new Vector3(.03f, (wrist - knuckles).magnitude * .62f, .082f), glove, false);
+            back.transform.localRotation = Quaternion.LookRotation(Vector3.forward, knuckles - wrist);
+            Limb(hand, At(-22, .034f, -.004f), At(8, .03f, .03f), .0105f, glove);
+            Primitive(hand, null, PrimitiveType.Sphere, At(-30, .04f, -.012f), new Vector3(.03f, .032f, .036f), glove, false);
+            // Cuff and sleeve run back and down out of view.
+            Vector3 forearm = new Vector3(.14f, -.23f, -.34f), cuff = Vector3.Lerp(wrist, forearm, .12f);
+            Limb(hand, wrist, cuff, .029f, glove);
+            Limb(hand, cuff, Vector3.Lerp(wrist, forearm, .2f), .032f, rubber);
+            Limb(hand, Vector3.Lerp(wrist, forearm, .19f), forearm, .04f, sleeve);
+        }
+
         // ------------------------------------------------------------ clue surfaces
         /// <summary>
         /// Registers a prop as a clue surface. The face sits on the writable plane with +Z pointing into the surface,
         /// so lettering written in its XY plane reads from the front.
         /// </summary>
-        static ClueSpot Spot(Transform prop, Vector3 surface, Quaternion faceRotation, ClueMedium medium, int zone, bool allowOrder, Vector2 area, Material ink, Color text)
+        static ClueSpot Spot(Transform prop, Vector3 surface, Quaternion faceRotation, ClueMedium medium, int zone, bool allowOrder, Vector2 area, Material ink)
         {
             var face = Child(prop, "Clue"); face.localPosition = surface; face.localRotation = faceRotation;
             face.gameObject.layer = ClueLayer;
             var spot = prop.gameObject.AddComponent<ClueSpot>();
-            spot.medium = medium; spot.zone = zone; spot.allowOrder = allowOrder; spot.face = face; spot.area = area; spot.ink = ink; spot.textColor = text;
+            spot.medium = medium; spot.zone = zone; spot.allowOrder = allowOrder; spot.face = face; spot.area = area; spot.ink = ink;
             var clue = prop.gameObject.AddComponent<HiddenClue>();
             clue.anchor = face; clue.obstructionMask = Obstructions; clue.hiddenRenderers = new Renderer[0];
             spot.clue = clue;
@@ -554,7 +577,7 @@ namespace RayOEZoning.Editor
             for (int x = -1; x <= 1; x += 2)
                 for (int y = -1; y <= 1; y += 2)
                     Cylinder(sign, null, new Vector3(x * .125f, y * .17f, .014f), .006f, .003f, stainless, AlongZ);
-            Spot(sign, new Vector3(0, 0, .0136f), FacingFront, ClueMedium.Plaque, zone, true, new Vector2(.25f, .34f), inkEngrave, new Color(.86f, .89f, .87f));
+            Spot(sign, new Vector3(0, 0, .0142f), FacingFront, ClueMedium.Plaque, zone, true, new Vector2(.25f, .34f), inkEngrave);
         }
 
         static void StickyNote(Transform parent, int zone, Vector3 at, float yaw, int seed)
@@ -563,8 +586,8 @@ namespace RayOEZoning.Editor
             var note = Placed(parent, "Sticky Note", at, yaw);
             note.localRotation *= Quaternion.Euler(0, 0, (float)(random.NextDouble() - .5) * 12);
             Box(note, null, new Vector3(0, 0, .0008f), new Vector3(.1f, .1f, .0016f), stickyYellow);
-            Box(note, null, new Vector3(0, .042f, .0017f), new Vector3(.1f, .016f, .0002f), stickyGlue);
-            Spot(note, new Vector3(0, -.004f, .0018f), FacingFront, ClueMedium.StickyNote, zone, false, new Vector2(.09f, .08f), inkMarker, Color.black);
+            Box(note, null, new Vector3(0, .042f, .0019f), new Vector3(.1f, .016f, .0002f), stickyGlue);
+            Spot(note, new Vector3(0, -.004f, .0024f), FacingFront, ClueMedium.StickyNote, zone, false, new Vector2(.09f, .08f), inkMarker);
         }
 
         static void Clipboard(Transform parent, int zone, Vector3 at, float yaw, int seed)
@@ -577,9 +600,9 @@ namespace RayOEZoning.Editor
             Box(board, null, new Vector3(0, .156f, .012f), new Vector3(.1f, .032f, .012f), stainless);
             Cylinder(board, null, new Vector3(0, .176f, .009f), .014f, .006f, darkMetal, AlongZ);
             // Printed form: a header bar and ruled lines along the bottom.
-            Box(board, null, new Vector3(0, .108f, .0077f), new Vector3(.185f, .012f, .0003f), plasticGrey);
-            for (int i = 0; i < 3; i++) Box(board, null, new Vector3(0, -.118f - i * .015f, .0077f), new Vector3(.185f, .0015f, .0003f), plasticGrey);
-            Spot(board, new Vector3(0, -.005f, .0079f), FacingFront, ClueMedium.Clipboard, zone, true, new Vector2(.19f, .19f), inkBallpoint, Color.black);
+            Box(board, null, new Vector3(0, .108f, .0081f), new Vector3(.185f, .012f, .0003f), plasticGrey);
+            for (int i = 0; i < 3; i++) Box(board, null, new Vector3(0, -.118f - i * .015f, .0081f), new Vector3(.185f, .0015f, .0003f), plasticGrey);
+            Spot(board, new Vector3(0, -.005f, .0088f), FacingFront, ClueMedium.Clipboard, zone, true, new Vector2(.19f, .19f), inkBallpoint);
         }
 
         /// <summary>A loose sheet on a worktop; <paramref name="readerYaw"/> is the direction someone reading it looks.</summary>
@@ -588,21 +611,21 @@ namespace RayOEZoning.Editor
             var sheet = Placed(parent, "Paper", at, readerYaw);
             Box(sheet, null, new Vector3(0, .0005f, 0), new Vector3(.21f, .001f, .297f), paper);
             for (int i = 0; i < 6; i++)
-                Box(sheet, null, new Vector3(i == 0 ? -.03f : 0, .00105f, .12f - i * .013f), new Vector3(i == 0 ? .1f : .16f, .0002f, i == 0 ? .006f : .0025f), plasticGrey);
-            Spot(sheet, new Vector3(0, .0012f, -.045f), Quaternion.LookRotation(Vector3.down, Vector3.forward), ClueMedium.Paper, zone, true, new Vector2(.18f, .17f), inkPencil, Color.black);
+                Box(sheet, null, new Vector3(i == 0 ? -.03f : 0, .0014f, .12f - i * .013f), new Vector3(i == 0 ? .1f : .16f, .0002f, i == 0 ? .006f : .0025f), plasticGrey);
+            Spot(sheet, new Vector3(0, .0019f, -.045f), Quaternion.LookRotation(Vector3.down, Vector3.forward), ClueMedium.Paper, zone, true, new Vector2(.18f, .17f), inkPencil);
         }
 
         /// <summary>The reserved screen on a lab island's -z face.</summary>
         static void BenchScreen(Transform bench, int zone, float along)
         {
             var monitor = Monitor(bench, new Vector3(along, .94f, -.4f), 180, screenOff);
-            Spot(monitor, new Vector3(0, .36f, .0025f), FacingFront, ClueMedium.Monitor, zone, true, new Vector2(.46f, .26f), inkScreen, Color.white);
+            Spot(monitor, new Vector3(0, .36f, .0028f), FacingFront, ClueMedium.Monitor, zone, true, new Vector2(.46f, .26f), inkScreen);
         }
 
         static void WallMonitorSpot(int zone, Transform parent, Vector3 at, float yaw)
         {
             var monitor = WallMonitor(parent, at, yaw, screenOff);
-            Spot(monitor, new Vector3(0, 0, .0525f), FacingFront, ClueMedium.Monitor, zone, true, new Vector2(.46f, .26f), inkScreen, Color.white);
+            Spot(monitor, new Vector3(0, 0, .0528f), FacingFront, ClueMedium.Monitor, zone, true, new Vector2(.46f, .26f), inkScreen);
         }
 
         static void Whiteboard(Transform parent, int zone, Vector3 at, float yaw)
@@ -616,7 +639,7 @@ namespace RayOEZoning.Editor
                 Cylinder(board, null, new Vector3(-.3f + i * .12f, -.474f, .035f), .009f, .12f, i == 0 ? binderRed : binderBlue, new Vector3(0, 0, 90));
             Box(board, null, new Vector3(.3f, -.466f, .035f), new Vector3(.12f, .03f, .045f), rubber);
             // Old notes on the left half stay visible; the right half is left for a clue.
-            var doodle = Child(board, "Notes"); doodle.localPosition = new Vector3(.38f, .03f, .0216f); doodle.localRotation = FacingFront;
+            var doodle = Child(board, "Notes"); doodle.localPosition = new Vector3(.38f, .03f, .0222f); doodle.localRotation = FacingFront;
             var mesh = new LetteringMesh();
             var random = new System.Random(5);
             Vector2[] boxes = { new Vector2(-.24f, .24f), new Vector2(.02f, .24f), new Vector2(.26f, .24f) };
@@ -640,7 +663,7 @@ namespace RayOEZoning.Editor
             var notes = doodle.gameObject.AddComponent<MeshFilter>(); notes.sharedMesh = mesh.Build("Whiteboard notes");
             var notesRenderer = doodle.gameObject.AddComponent<MeshRenderer>(); notesRenderer.sharedMaterial = inkWhiteboard;
             notesRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            Spot(board, new Vector3(-.36f, .02f, .0216f), FacingFront, ClueMedium.Whiteboard, zone, true, new Vector2(.64f, .7f), inkMarkerRed, Color.black);
+            Spot(board, new Vector3(-.36f, .02f, .0222f), FacingFront, ClueMedium.Whiteboard, zone, true, new Vector2(.64f, .7f), inkMarkerRed);
         }
 
         static void ControlPanel(Transform parent, int zone, Vector3 at, float yaw)
@@ -653,20 +676,20 @@ namespace RayOEZoning.Editor
             Box(panel, null, new Vector3(.17f, -.13f, .061f), new Vector3(.015f, .015f, .004f), ledBlue);
             // Conduit from the top of the box up to the ceiling.
             Cylinder(panel, null, new Vector3(-.14f, (Ceiling - at.y + .16f) * .5f, .02f), .012f, Ceiling - at.y - .16f, steel);
-            Spot(panel, new Vector3(0, .05f, .0647f), FacingFront, ClueMedium.Lcd, zone, true, new Vector2(.29f, .11f), inkLcd, Color.black);
+            Spot(panel, new Vector3(0, .05f, .0652f), FacingFront, ClueMedium.Lcd, zone, true, new Vector2(.29f, .11f), inkLcd);
         }
 
         static void FreezerLabel(Transform parent, int zone, Vector3 at, float yaw)
         {
             var label = Placed(parent, "Label", at, yaw);
             Box(label, null, new Vector3(0, 0, .0004f), new Vector3(.26f, .055f, .0008f), labelTape);
-            Spot(label, new Vector3(0, 0, .0009f), FacingFront, ClueMedium.Label, zone, false, new Vector2(.25f, .05f), inkLabel, new Color(.92f, .92f, .9f));
+            Spot(label, new Vector3(0, 0, .0013f), FacingFront, ClueMedium.Label, zone, false, new Vector2(.25f, .05f), inkLabel);
         }
 
         static void Stencil(Transform parent, int zone, Vector3 at, float yaw)
         {
             var stencil = Placed(parent, "Stencil", at, yaw);
-            Spot(stencil, new Vector3(0, 0, .0012f), FacingFront, ClueMedium.Stencil, zone, true, new Vector2(1.0f, .7f), inkPaint, Color.white);
+            Spot(stencil, new Vector3(0, 0, .0015f), FacingFront, ClueMedium.Stencil, zone, true, new Vector2(1.0f, .7f), inkPaint);
         }
 
         static void Memo(Transform parent, int zone, Vector3 at, float yaw)
@@ -675,8 +698,8 @@ namespace RayOEZoning.Editor
             Box(memo, null, new Vector3(0, 0, .0004f), new Vector3(.21f, .297f, .0008f), paper);
             for (int side = -1; side <= 1; side += 2)
                 Box(memo, null, new Vector3(side * .09f, .14f, .0009f), new Vector3(.065f, .022f, .0004f), tape).transform.localRotation = Quaternion.Euler(0, 0, side * -32);
-            Box(memo, null, new Vector3(0, .115f, .00085f), new Vector3(.17f, .012f, .0002f), plasticGrey);
-            Spot(memo, new Vector3(0, -.02f, .001f), FacingFront, ClueMedium.Memo, zone, true, new Vector2(.18f, .22f), inkPrint, new Color(.05f, .05f, .06f));
+            Box(memo, null, new Vector3(0, .115f, .0013f), new Vector3(.17f, .012f, .0002f), plasticGrey);
+            Spot(memo, new Vector3(0, -.02f, .0018f), FacingFront, ClueMedium.Memo, zone, true, new Vector2(.18f, .22f), inkPrint);
         }
     }
 }

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -16,14 +15,13 @@ namespace RayOEZoning
             public LetteringStyle style;
             public LetteringMesh mesh = new LetteringMesh();
             public List<Renderer> renderers = new List<Renderer>();
-            public TMP_FontAsset font;
             public System.Random random;
             public float pen;
         }
 
-        public static Renderer[] Write(ClueSpot spot, ClueDefinition clue, TMP_FontAsset font, System.Random random)
+        public static Renderer[] Write(ClueSpot spot, ClueDefinition clue, System.Random random)
         {
-            var page = new Page { spot = spot, style = spot.Style, font = font, random = random };
+            var page = new Page { spot = spot, style = spot.Style, random = random };
             float h = spot.area.y;
             page.pen = page.style == LetteringStyle.Marker ? h * .035f : page.style == LetteringStyle.Stencil ? h * .05f : h * .016f;
             if (clue.kind == ClueKind.Code) Code(page, clue);
@@ -159,7 +157,7 @@ namespace RayOEZoning
 
         // ------------------------------------------------------------ marks
         /// <summary>Approximate line width per character, in cap heights.</summary>
-        static float Ratio(LetteringStyle style) => style == LetteringStyle.Pixel ? 6f / 7f : style == LetteringStyle.Printed ? .82f : Lettering.Advance / Lettering.CapUnits;
+        static float Ratio(LetteringStyle style) => style == LetteringStyle.Pixel ? 6f / 7f : Lettering.Advance / Lettering.CapUnits;
 
         static float Fit(Page page, string text, float width) => width / Mathf.Max(1, text.Length * Ratio(page.style));
 
@@ -176,9 +174,6 @@ namespace RayOEZoning
                     Lettering.PixelText(page.mesh, text, new Vector2(left + pitch * .5f, at.y - cap * .5f + pitch * .5f), pitch);
                     break;
                 }
-                case LetteringStyle.Printed:
-                    Printed(page, text, at, cap, align);
-                    break;
                 default:
                 {
                     float width = Lettering.StrokeWidth(text, cap);
@@ -187,26 +182,6 @@ namespace RayOEZoning
                     break;
                 }
             }
-        }
-
-        static void Printed(Page page, string value, Vector2 at, float cap, Align align)
-        {
-            var go = new GameObject("Text (TMP)");
-            go.layer = page.spot.face.gameObject.layer;
-            go.transform.SetParent(page.spot.face, false);
-            var text = go.AddComponent<TextMeshPro>();
-            if (page.font) text.font = page.font;
-            text.text = value; text.color = page.spot.textColor; text.fontSize = 36; text.fontStyle = FontStyles.Bold;
-            text.alignment = TextAlignmentOptions.Center; text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.rectTransform.sizeDelta = new Vector2(100, 10); text.richText = false;
-            text.ForceMeshUpdate(true, true);
-            Bounds bounds = text.textBounds;
-            float scale = cap / Mathf.Max(.001f, bounds.size.y);
-            float width = bounds.size.x * scale;
-            var center = new Vector2(align == Align.Center ? at.x : at.x + width * .5f, at.y);
-            go.transform.localScale = Vector3.one * scale;
-            go.transform.localPosition = new Vector3(center.x - bounds.center.x * scale, center.y - bounds.center.y * scale, 0);
-            page.renderers.Add(text.renderer);
         }
 
         static void Symbol(Page page, string name, Vector2 center, float half)

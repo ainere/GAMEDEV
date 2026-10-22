@@ -3,83 +3,47 @@ using UnityEngine.Rendering;
 
 namespace RayOEZoning
 {
+    /// <summary>
+    /// Hidden writing revealed by the held flashlight. This component decides whether the writing can be lit at all
+    /// (light on, within range, near the cone, clear line from the lamp); the RevealInk shader then shows only the
+    /// strokes that actually fall inside the cone.
+    /// </summary>
     public sealed class HiddenClue : MonoBehaviour
     {
         public int clueIndex;
         public Transform anchor;
         public Renderer[] hiddenRenderers;
         public LayerMask obstructionMask;
+        /// <summary>Half the diagonal of the writing, so a lit edge still counts while the centre is outside the cone.</summary>
+        public float radius = .2f;
 
         public bool IsVisible { get; private set; }
-        public bool IsInSight { get; private set; }
-        public float ReadProgress { get; private set; }
 
         private void Awake()
         {
             SetRenderersVisible(false);
         }
 
-        public bool Evaluate(Camera camera, bool torchOn, float range, float coneDegrees, float dt, Transform lightOrigin = null)
+        public bool Evaluate(bool torchOn, float range, float coneDegrees, Transform emitter)
         {
-            Transform targetTransform = anchor != null ? anchor : transform;
+            Transform target = anchor != null ? anchor : transform;
             bool visible = false;
-
-            if (camera != null && torchOn && range > 0f)
+            if (emitter != null && torchOn && range > 0f)
             {
-                Transform emitter = lightOrigin ? lightOrigin : camera.transform;
-                Vector3 fromCamera = targetTransform.position - emitter.position;
-                float distance = fromCamera.magnitude;
-                if (distance > 0.001f && distance <= range)
+                Vector3 toTarget = target.position - emitter.position;
+                float distance = toTarget.magnitude;
+                if (distance > 0.001f && distance <= range + radius)
                 {
                     float halfAngle = Mathf.Clamp(coneDegrees, 0f, 179.9f) * 0.5f;
-                    float minimumDot = Mathf.Cos(halfAngle * Mathf.Deg2Rad);
-                    if (Vector3.Dot(emitter.forward, fromCamera / distance) >= minimumDot &&
-                        HasClearView(emitter.position, fromCamera / distance, distance))
-                    {
-                        visible = true;
-                    }
+                    float spread = Mathf.Atan2(radius, distance) * Mathf.Rad2Deg;
+                    visible = Vector3.Angle(emitter.forward, toTarget) <= halfAngle + spread &&
+                        !Physics.Raycast(emitter.position, toTarget / distance, distance, obstructionMask, QueryTriggerInteraction.Ignore);
                 }
             }
 
-            SetVisible(visible);
-            IsInSight = false;
-            float readingDistance = float.PositiveInfinity;
-            if (visible)
-            {
-                Vector3 sight = targetTransform.position - camera.transform.position;
-                readingDistance = sight.magnitude;
-                Vector3 viewport = camera.WorldToViewportPoint(targetTransform.position);
-                IsInSight = viewport.z > 0 && viewport.x >= 0 && viewport.x <= 1 &&
-                    viewport.y >= 0 && viewport.y <= 1 && (readingDistance <= .001f ||
-                    HasClearView(camera.transform.position, sight / readingDistance, readingDistance));
-            }
-            bool canRead = IsInSight && readingDistance <= 3f;
-            if (!canRead)
-            {
-                ResetReading();
-                return false;
-            }
-
-            float previous = ReadProgress;
-            ReadProgress = Mathf.Min(0.8f, ReadProgress + Mathf.Max(0f, dt));
-            return previous < 0.8f && ReadProgress >= 0.8f;
-        }
-
-        public void ResetReading()
-        {
-            ReadProgress = 0f;
-        }
-
-        private bool HasClearView(Vector3 origin, Vector3 direction, float distance)
-        {
-            return !Physics.Raycast(origin, direction, distance, obstructionMask,
-                QueryTriggerInteraction.Ignore);
-        }
-
-        private void SetVisible(bool visible)
-        {
             IsVisible = visible;
             SetRenderersVisible(visible);
+            return visible;
         }
 
         private void SetRenderersVisible(bool visible)
@@ -97,6 +61,30 @@ namespace RayOEZoning
                 clueRenderer.receiveShadows = false;
                 clueRenderer.enabled = visible;
             }
+        }
+    }
+
+    /// <summary>Feeds the held flashlight's cone to the RevealInk shader.</summary>
+    public static class RevealInk
+    {
+        static readonly int Position = Shader.PropertyToID("_RevealLightPosition");
+        static readonly int Direction = Shader.PropertyToID("_RevealLightDirection");
+        static readonly int Cone = Shader.PropertyToID("_RevealLightCone");
+
+        public static void Push(Light light, bool on)
+        {
+            if (!light)
+            {
+                Shader.SetGlobalVector(Position, Vector4.zero);
+                return;
+            }
+            Transform t = light.transform;
+            Vector3 p = t.position, f = t.forward;
+            float outer = light.spotAngle * .5f * Mathf.Deg2Rad;
+            Shader.SetGlobalVector(Position, new Vector4(p.x, p.y, p.z, on && light.enabled ? 1 : 0));
+            Shader.SetGlobalVector(Direction, new Vector4(f.x, f.y, f.z, light.range));
+            // Full strength across the bright part of the pool, fading out at its edge.
+            Shader.SetGlobalVector(Cone, new Vector4(Mathf.Cos(outer), Mathf.Cos(outer * .78f), 0, 0));
         }
     }
 }

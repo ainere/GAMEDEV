@@ -1,4 +1,3 @@
-using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,7 +8,7 @@ namespace RayOEZoning
 {
     /// <summary>
     /// Minimal play interface: a crosshair dot, a detection ring that only appears while a camera has the player,
-    /// one prompt line, and plain overlays for the notebook, the keypad and the end of the run.
+    /// one prompt line for the terminal, and plain overlays for the keypad and the end of the run.
     /// </summary>
     [DefaultExecutionOrder(1200)]
     public sealed class StealthPresentation : MonoBehaviour
@@ -20,23 +19,23 @@ namespace RayOEZoning
         public TMP_FontAsset font;
         public Light[] corridorLights;
         static readonly Color White = new Color(.94f, .95f, .95f), Soft = new Color(.94f, .95f, .95f, .6f);
-        /// <summary>Shared by the screen-edge vignette and the top half of the detection ring.</summary>
+        /// <summary>Shared by the screen-edge vignette and the top of the detection ring.</summary>
         static readonly Color Red = new Color(.8f, .03f, .02f);
+        static readonly Color Amber = new Color(1f, .6f, .2f);
         static readonly Vector2 Center = new Vector2(.5f, .5f);
-        const string Controls = "WASD move   SHIFT sprint   C crouch   Z prone   F flashlight   N notebook   E use   F3 debug";
+        const float RingSize = 250;
         RectTransform canvas;
         CanvasGroup ringGroup;
-        DetectionRing ring;
-        TMP_Text detected, prompt, toast, notebookBody, keypadNotice;
+        Image fillLeft, fillRight;
+        TMP_Text detected, prompt, toast, keypadNotice;
         TMP_Text[] slots;
         RectTransform[] pips;
-        GameObject notebook, keypad, won;
+        GameObject keypad, won;
         Image vignette, curtain;
         Vector3 closedDoorPosition;
-        int lastNoteCount;
         string lastNotice = string.Empty;
         float toastUntil, ringAlpha;
-        bool built, explainedNotebook;
+        bool built;
 
         void Start()
         {
@@ -62,34 +61,27 @@ namespace RayOEZoning
             vignette.sprite = RadialSprite();
             Image(canvas, "Crosshair", Soft, Vector2.zero, new Vector2(4, 4));
 
-            var ringRoot = Box(canvas, "Detection", Vector2.zero, new Vector2(320, 320));
+            // Translucent ring that fills from the bottom up both sides at once, white through amber to red.
+            var ringRoot = Box(canvas, "Detection", Vector2.zero, Vector2.one * RingSize);
             ringGroup = ringRoot.gameObject.AddComponent<CanvasGroup>(); ringGroup.alpha = 0;
-            ring = Box(ringRoot, "Ring", Vector2.zero, new Vector2(300, 300)).gameObject.AddComponent<DetectionRing>();
-            ring.radius = 118; ring.thickness = 7; ring.lowColor = White; ring.highColor = Red; ring.raycastTarget = false;
-            Text(ringRoot, "?", "?", 34, White, new Vector2(0, -118), new Vector2(40, 44), TextAlignmentOptions.Center);
-            Text(ringRoot, "!", "!", 36, Red, new Vector2(0, 118), new Vector2(40, 44), TextAlignmentOptions.Center);
-            detected = Text(ringRoot, "Detected", "DETECTED", 30, Red, Vector2.zero, new Vector2(220, 50), TextAlignmentOptions.Center);
+            var track = Image(ringRoot, "Track", new Color(1, 1, 1, .2f), Vector2.zero, Vector2.one * RingSize);
+            track.sprite = RingSprite(false);
+            fillLeft = RingFill(ringRoot, true);
+            fillRight = RingFill(ringRoot, false);
+            detected = Text(ringRoot, "Detected", "DETECTED", 28, Red, Vector2.zero, new Vector2(200, 44), TextAlignmentOptions.Center);
             Outline(detected);
             int count = game.hazards != null ? game.hazards.Length : 0;
             pips = new RectTransform[count];
             for (int i = 0; i < count; i++)
             {
-                var pip = Image(ringRoot, "Direction", Red, Vector2.zero, new Vector2(11, 11));
-                pip.rectTransform.localEulerAngles = new Vector3(0, 0, 45);
+                var pip = Image(ringRoot, "Direction", Red, Vector2.zero, new Vector2(16, 16));
+                pip.sprite = ArrowSprite();
                 pips[i] = pip.rectTransform;
             }
 
             prompt = Text(canvas, "Prompt", "", 24, Soft, new Vector2(0, -200), new Vector2(900, 40), TextAlignmentOptions.Center);
             toast = Text(canvas, "Toast", "", 24, White, new Vector2(0, -240), new Vector2(900, 40), TextAlignmentOptions.Center);
             Outline(prompt); Outline(toast);
-
-            notebook = Overlay("Notebook");
-            var page = (RectTransform)notebook.transform;
-            Text(page, "Title", "NOTEBOOK", 22, Soft, new Vector2(0, 330), new Vector2(760, 40), TextAlignmentOptions.Center);
-            notebookBody = Text(page, "Entries", "", 30, White, new Vector2(0, 40), new Vector2(760, 520), TextAlignmentOptions.Top);
-            notebookBody.lineSpacing = 18;
-            Text(page, "Close", "N  close", 20, Soft, new Vector2(0, -300), new Vector2(760, 30), TextAlignmentOptions.Center);
-            Text(page, "Controls", Controls, 18, new Color(1, 1, 1, .38f), new Vector2(0, -420), new Vector2(1500, 30), TextAlignmentOptions.Center);
 
             keypad = Overlay("Keypad");
             var pad = (RectTransform)keypad.transform;
@@ -130,7 +122,6 @@ namespace RayOEZoning
             float now = Time.unscaledTime, step = Time.unscaledDeltaTime;
             if (exitGrid) exitGrid.SetActive(!game.ExitUnlocked);
             if (door) door.localPosition = Vector3.Lerp(door.localPosition, closedDoorPosition + (game.ExitUnlocked ? Vector3.up * 3.6f : Vector3.zero), step * .8f);
-            notebook.SetActive(game.Mode == GameMode.Notebook);
             keypad.SetActive(game.Mode == GameMode.Keypad);
             won.SetActive(game.Mode == GameMode.Won);
 
@@ -145,57 +136,93 @@ namespace RayOEZoning
                 if (!pips[i].gameObject.activeSelf) continue;
                 Vector3 local = game.playerCamera.transform.InverseTransformPoint(hazard.SightOrigin);
                 float angle = Mathf.Atan2(local.x, local.z);
-                pips[i].anchoredPosition = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * 162;
+                pips[i].anchoredPosition = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * (RingSize * .5f + 14);
+                pips[i].localEulerAngles = new Vector3(0, 0, -angle * Mathf.Rad2Deg);
             }
             float target = caught || (playing && (seen || game.Alert > .001f)) ? 1 : 0;
             ringAlpha = Mathf.MoveTowards(ringAlpha, target, step * (target > ringAlpha ? 8 : 2.5f));
             ringGroup.alpha = ringAlpha;
-            ring.SetFill(caught ? 1 : game.Alert);
+            float fill = caught ? 1 : game.Alert;
+            fillLeft.fillAmount = fillRight.fillAmount = fill * .5f;
             detected.gameObject.SetActive(caught);
             float danger = playing || caught ? Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.2f, 1, game.Alert)) : 0;
             vignette.color = new Color(Red.r, Red.g, Red.b, danger * (.42f + .14f * Mathf.Sin(now * (5 + 9 * game.Alert))));
             curtain.color = new Color(0, 0, 0, caught ? Mathf.Clamp01(game.CaughtFade / .65f) * .85f : 0);
 
             prompt.text = playing ? game.Prompt : "";
-            if (game.Notes.Count > lastNoteCount)
-            {
-                var note = game.Notes[game.Notes.Count - 1];
-                string text = note.kind == ClueKind.Code ? "Noted  " + note.symbol.ToUpperInvariant() + "  " + note.digit : "Noted  order note";
-                if (!explainedNotebook) { text += "   (N  notebook)"; explainedNotebook = true; }
-                Toast(text, now);
-            }
-            lastNoteCount = game.Notes.Count;
             if (game.Notice != lastNotice)
             {
                 lastNotice = game.Notice;
-                if (game.ExitUnlocked && !string.IsNullOrEmpty(lastNotice) && playing) Toast(lastNotice, now);
+                if (game.ExitUnlocked && !string.IsNullOrEmpty(lastNotice) && playing) { toast.text = lastNotice; toastUntil = now + 2.6f; }
             }
             toast.alpha = playing ? Mathf.Clamp01((toastUntil - now) / .6f) : 0;
 
-            if (game.Mode == GameMode.Notebook) notebookBody.text = NotebookText();
             for (int i = 0; i < 4; i++) slots[i].text = i < game.KeypadInput.Length ? game.KeypadInput[i].ToString() : "";
             keypadNotice.text = game.Mode == GameMode.Keypad && game.Notice == "Wrong code" ? "Wrong code" : "";
         }
 
-        void Toast(string text, float now) { toast.text = text; toastUntil = now + 2.6f; }
-
-        string NotebookText()
+        Image RingFill(RectTransform parent, bool left)
         {
-            if (game.Notes.Count == 0) return "<alpha=#80>Nothing yet. Shine the flashlight on notes, screens and signs.";
-            var text = new StringBuilder();
-            foreach (var note in game.Notes)
-                if (note.kind == ClueKind.Code) text.Append(note.symbol.ToUpperInvariant()).Append("   ").Append(note.digit).Append('\n');
-            bool header = false;
-            foreach (var note in game.Notes)
-            {
-                if (note.kind != ClueKind.Order) continue;
-                if (!header) { text.Append("\n<alpha=#99>ORDER<alpha=#FF>\n"); header = true; }
-                foreach (string statement in note.statements) text.Append(statement).Append('\n');
-            }
-            return text.ToString();
+            var fill = Image(parent, "Fill", new Color(1, 1, 1, .85f), Vector2.zero, Vector2.one * RingSize);
+            fill.sprite = RingSprite(true);
+            fill.type = UnityEngine.UI.Image.Type.Filled; fill.fillMethod = UnityEngine.UI.Image.FillMethod.Radial360;
+            fill.fillOrigin = (int)UnityEngine.UI.Image.Origin360.Bottom;
+            // Clockwise from the bottom runs up the left side; counter-clockwise runs up the right.
+            fill.fillClockwise = left; fill.fillAmount = 0;
+            return fill;
         }
 
-        static Sprite radial;
+        static Sprite trackSprite, fillSprite, arrowSprite, radial;
+
+        /// <summary>Anti-aliased ring. The fill version bakes the gradient by height: white at the bottom, red at the top.</summary>
+        static Sprite RingSprite(bool gradient)
+        {
+            if (gradient ? fillSprite : trackSprite) return gradient ? fillSprite : trackSprite;
+            const int size = 512;
+            const float outer = size * .5f - 4, thickness = 22;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = gradient ? "Ring fill" : "Ring track" };
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + .5f - size * .5f, dy = y + .5f - size * .5f;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    float coverage = Mathf.Clamp01(outer - r + .5f) * Mathf.Clamp01(r - (outer - thickness) + .5f);
+                    Color c = White;
+                    if (gradient)
+                    {
+                        float t = Mathf.Acos(Mathf.Clamp(-dy / Mathf.Max(r, .001f), -1, 1)) / Mathf.PI;
+                        c = t < .5f ? Color.Lerp(White, Amber, t / .5f) : Color.Lerp(Amber, Red, (t - .5f) / .5f);
+                    }
+                    c.a = coverage;
+                    pixels[y * size + x] = c;
+                }
+            texture.SetPixels32(pixels); texture.Apply();
+            var sprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f));
+            if (gradient) fillSprite = sprite; else trackSprite = sprite;
+            return sprite;
+        }
+
+        /// <summary>Small arrow pointing up, rotated to face the watching camera.</summary>
+        static Sprite ArrowSprite()
+        {
+            if (arrowSprite) return arrowSprite;
+            const int size = 64;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "Direction arrow" };
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float u = (x + .5f) / size, v = (y + .5f) / size;
+                    float halfWidth = (1 - v) * .45f;
+                    float edge = Mathf.Min(halfWidth - Mathf.Abs(u - .5f), Mathf.Min(v - .1f, .92f - v)) * size;
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(255 * Mathf.Clamp01(edge + .5f)));
+                }
+            texture.SetPixels32(pixels); texture.Apply();
+            arrowSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f));
+            return arrowSprite;
+        }
+
         static Sprite RadialSprite()
         {
             if (radial) return radial;
@@ -241,7 +268,7 @@ namespace RayOEZoning
         {
             var rt = Box(parent, name, at, area); var text = rt.gameObject.AddComponent<TextMeshProUGUI>();
             text.font = font; text.text = value; text.fontSize = size; text.color = color; text.alignment = align; text.fontStyle = FontStyles.Bold;
-            text.textWrappingMode = TextWrappingModes.Normal; text.overflowMode = TextOverflowModes.Overflow; text.raycastTarget = false; text.richText = true; return text;
+            text.textWrappingMode = TextWrappingModes.Normal; text.overflowMode = TextOverflowModes.Overflow; text.raycastTarget = false; text.richText = false; return text;
         }
         /// <summary>A thin dark edge keeps a line legible over the flashlight's bright pool.</summary>
         static void Outline(TMP_Text text) { text.outlineWidth = .22f; text.outlineColor = new Color32(0, 0, 0, 200); }

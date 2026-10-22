@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 namespace RayOEZoning
@@ -11,7 +10,6 @@ namespace RayOEZoning
     {
         public StealthGame game;
         public ClueSpot[] spots;
-        public TMP_FontAsset font;
         public bool randomizeOnPlay = true;
         /// <summary>Seed of the arrangement currently written into the scene.</summary>
         public int seed = 1;
@@ -78,7 +76,7 @@ namespace RayOEZoning
             foreach (var (spot, index) in chosen)
             {
                 if (index >= Run.clues.Length) continue;
-                spot.Show(Run.clues[index], index, font, new System.Random(random.Next()));
+                spot.Show(Run.clues[index], index, new System.Random(random.Next()));
                 if (spot.clue) clues.Add(spot.clue);
             }
             if (game) game.SetPuzzle(Run, clues.ToArray());

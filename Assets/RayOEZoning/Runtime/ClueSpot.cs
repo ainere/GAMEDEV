@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 
 namespace RayOEZoning
@@ -26,8 +25,8 @@ namespace RayOEZoning
         public bool allowOrder = true;
         public Transform face;
         public Vector2 area = new Vector2(.2f, .25f);
+        /// <summary>RevealInk material: the writing only exists where the flashlight cone falls.</summary>
         public Material ink;
-        public Color textColor = Color.white;
         public HiddenClue clue;
 
         public LetteringStyle Style
@@ -58,13 +57,14 @@ namespace RayOEZoning
             if (clue) clue.hiddenRenderers = new Renderer[0];
         }
 
-        public void Show(ClueDefinition definition, int index, TMP_FontAsset font, System.Random random)
+        public void Show(ClueDefinition definition, int index, System.Random random)
         {
             Clear();
-            var renderers = ClueWriter.Write(this, definition, font, random);
+            var renderers = ClueWriter.Write(this, definition, random);
             if (!clue) return;
             clue.clueIndex = index;
             clue.anchor = face;
+            clue.radius = area.magnitude * .5f;
             clue.hiddenRenderers = renderers;
         }
 

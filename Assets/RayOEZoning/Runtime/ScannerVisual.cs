@@ -170,7 +170,7 @@ namespace RayOEZoning
                 lamp.transform.SetPositionAndRotation(detector.SightOrigin, Quaternion.LookRotation(detector.SightForward));
                 lamp.enabled = detector.useViewCone && detector.VisionRange > 0 && detector.VisionAngle > 0;
             }
-            UpdateShaft(Color.Lerp(new Color(.82f, .9f, 1f), new Color(1f, .3f, .25f), alarm * .85f));
+            UpdateShaft(Color.Lerp(new Color(.82f, .9f, 1f), new Color(1f, .3f, .25f), alarm * .55f) * (1 - .88f * ViewerInsideBeam()));
             foreach (var wire in wires) wire.enabled = false;
             if (diagnostic) DrawQuery(color);
             sightRay.enabled = diagnostic && detector.HasSightSample;
@@ -179,6 +179,20 @@ namespace RayOEZoning
                 sightRay.positionCount = 2; sightRay.SetPosition(0, detector.LastRayOrigin); sightRay.SetPosition(1, detector.LastRayTarget);
                 Tint(sightRay, detector.LastRayBlocked ? new Color(.15f, .85f, .65f, .9f) : new Color(1, .18f, .08f, .9f));
             }
+        }
+
+        /// <summary>
+        /// 1 when the player's eye is inside this beam. Seen from inside, the shaft's far wall reads as flat sheets,
+        /// so it fades out and the lit pool, outline and red vignette carry the warning instead.
+        /// </summary>
+        float ViewerInsideBeam()
+        {
+            if (!game || !game.playerCamera) return 0;
+            Vector3 toEye = game.playerCamera.transform.position - detector.SightOrigin;
+            float distance = toEye.magnitude, half = detector.VisionAngle * .5f;
+            if (distance > detector.VisionRange + 1) return 0;
+            float angle = Vector3.Angle(detector.SightForward, toEye);
+            return 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(half * .8f, half * 1.25f, angle));
         }
 
         void UpdateCone(Color color)

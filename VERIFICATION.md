@@ -1,5 +1,14 @@
 # Ray-OE Zoning verification
 
+## Second remodel pass (2026-10-22)
+
+Removed the notebook, reading prompts, zone pictograms and the first person body; added per-pixel flashlight reveal, flashlight auto-exposure, a sprite-based detection ring and a rebuilt glove; fixed z-fighting, beam sheets seen from inside, and a sightline over the supply divider to the spawn.
+
+- **EditMode: 79 passed, 0 failed. PlayMode: 11 passed, 0 failed.** Tests changed with the API: reveal-only `HiddenClue.Evaluate`, an edge-lit clue staying on for the shader, the terminal as the only prompt, and reveal through capture and retry. The route playback was not re-run.
+- The standing coverage map shows the whole staff entry up to the divider outside camera coverage; coverage behind the divider is unchanged.
+- The z-fighting audit went from 77 visible overlaps to 10, all of them faces pressed under the chamber roof.
+- Review renders show partial reveal on the plaque and clipboard, close-up paper no longer blown out, the new glove from several angles, the vault jamb, and doorways without pictograms. Review-build HUD captures show the ring partly and fully filled, with no exceptions in the player log.
+
 ## Remodel revision (2026-10-22)
 
 This revision changed the puzzle, interface, CCTV models, first person body and flashlight, prop placement and hierarchy names. Collision geometry, camera placement, sweep timing and detection rules were left as they were. At the user's direction the gameplay suites and route playback were **not** re-run for this revision.

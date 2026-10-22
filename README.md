@@ -22,23 +22,22 @@ Add the cloned project folder in Unity Hub and open it with **Unity 6000.6.0f1**
 | Left Shift + forward movement | Sprint while standing |
 | F | Toggle flashlight |
 | E | Use the nearby archive terminal |
-| N | Open or close the notebook |
-| Escape | Close the notebook or keypad |
+| Escape | Close the keypad |
 | 0–9, Backspace, Enter | Enter, edit and submit the keypad code |
 | F3 | Toggle detection diagnostics (query wireframes, cones and sight rays) |
 | R | Play again after reaching the vault |
 
-There is no pause menu or start-up key legend; the notebook lists the controls at the bottom. Standing, crouched and prone movement use different speeds and body heights. Standing up is blocked when there is not enough headroom. Jump is disabled. The notebook and keypad freeze movement, patrols and alert until closed.
+There is no pause menu, start-up key legend or notebook. Standing, crouched and prone movement use different speeds and body heights. Standing up is blocked when there is not enough headroom. Jump is disabled. The keypad freezes movement, patrols and alert until closed.
 
 ## How to play
 
-The laboratory is dark but not pitch black: a few night lights, monitors and status LEDs outline each room, and the flashlight does the rest. Hidden writing shows only while the flashlight is on and the surface is inside its cone and range with nothing in the way. Hold the light on it within three metres for 0.8 seconds to copy it into your notebook.
+The laboratory is dark but not pitch black: a few night lights, monitors and status LEDs outline each room, and the flashlight does the rest. Hidden writing appears only where the flashlight's beam falls: sweep the light across a page and the strokes outside the beam stay invisible. The flashlight adjusts its brightness to the distance of what it hits, so close-up paper is not washed out. Nothing is copied for you; remember the digits and order notes, or write them down.
 
 Each run rolls a new four-digit code from a pool of 16 symbols. Every room hides one **code digit**: a symbol with its name and digit. Two other surfaces carry the **order notes**, short statements such as `KEY RIGHT AFTER MOON` or `STAR IS NOT FIRST`. The two notes together pin down exactly one symbol order; neither does on its own. The writing matches whatever it is on: an engraved wall plaque, ballpoint on a clipboard, pencil on loose paper, marker on a sticky note or whiteboard, green text on a sleeping monitor, an LCD control panel, label-maker tape on a freezer, a spray-painted stencil, or a typed memo. Fourteen surfaces can carry writing, so the hiding places differ between runs.
 
 Each CCTV camera throws a white, hard-edged searchlight that moves with the camera. The lit pool on the floor, traced by a thin outline, is exactly the area that camera covers. Tall equipment casts safe shadows. Behind low benches you must crouch so your head drops out of sight. The searchlight and its outline turn red while it sees you.
 
-The screen shows only a small crosshair until a camera sees you. Then a detection ring fades in around the crosshair. It fills from the `?` at the bottom up both sides: white for the first half, then red (the same red as the screen-edge vignette) up to the `!` at the top. A small red marker on the ring points at the watching camera. A full ring shows **DETECTED**. Once you are out of sight the ring drains and fades away.
+The screen shows only a small crosshair until a camera sees you. Then a detection ring fades in around the crosshair. It is a translucent circle that fills from the bottom up both sides at once, shading smoothly from white through amber to red (the same red as the screen-edge vignette) at the top. A small red arrow outside the ring points at the watching camera. A full ring shows **DETECTED**. Once you are out of sight the ring drains and fades away.
 
 Full exposure takes 1.35 seconds; breaking sight drains the meter over 1.5 seconds. Getting caught returns you to the staff entrance and resets the patrols, stance, keypad and archive door, but your notes are kept.
 
@@ -70,7 +69,7 @@ The Unity Starter Assets first person controller and Input System are used. A re
 
 ## Source and tests
 
-- `Assets/RayOEZoning/Runtime/`: stealth state, spatial detection, flashlight reveal, stance, the per-run puzzle (`PuzzleCatalog`, `ClueDirector`, `ClueSpot`, `ClueWriter`, `Lettering`), interface (`StealthPresentation`, `DetectionRing`) and visuals (searchlight shafts, coverage outline, first person body and hand).
+- `Assets/RayOEZoning/Runtime/`: stealth state, spatial detection, stance, the per-run puzzle (`PuzzleCatalog`, `ClueDirector`, `ClueSpot`, `ClueWriter`, `Lettering`), interface (`StealthPresentation`), flashlight reveal (`HiddenClue`, `RevealInk` shader) and visuals (searchlight shafts, coverage outline, held flashlight and hand).
 - `Assets/RayOEZoning/Editor/`: reproducible level authoring (`ZoningBuilder*.cs`, including generated surface textures and the post-processing profile) and the Windows build command.
 - `Assets/RayOEZoning/Art/`: materials, generated textures and the `LightShaft` shader.
 - `Assets/RayOEZoning/Tests/`: EditMode and PlayMode tests.

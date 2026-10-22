@@ -115,10 +115,9 @@ namespace RayOEZoning.Tests
                 game.playerCamera.transform.LookAt(target);
                 game.torch.transform.SetPositionAndRotation(game.torchOrigin.position, game.torchOrigin.rotation);
                 Physics.SyncTransforms();
-                clue.ResetReading();
-                Assert.That(clue.Evaluate(game.playerCamera, true, game.torch.range, game.torch.spotAngle, .81f,
-                    game.torch.transform), Is.True, spot.name + " needs an unobstructed reading approach within 3 m.");
-                clue.Evaluate(game.playerCamera, false, 8, 50, 0);
+                Assert.That(clue.Evaluate(true, game.torch.range, game.torch.spotAngle, game.torch.transform), Is.True,
+                    spot.name + " needs an unobstructed approach the flashlight can light.");
+                clue.Evaluate(false, 8, 50, game.torch.transform);
                 Assert.That(clue.hiddenRenderers.All(r => !r.enabled), Is.True);
             }
         }

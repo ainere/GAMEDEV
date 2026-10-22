@@ -6,7 +6,7 @@ namespace RayOEZoning
 {
     public enum LetteringStyle
     {
-        /// <summary>Typeset text (TextMeshPro).</summary>
+        /// <summary>Clean monoline lettering: engraving, label tape, typed print.</summary>
         Printed,
         /// <summary>Ballpoint or pencil handwriting.</summary>
         Hand,
@@ -209,17 +209,18 @@ namespace RayOEZoning
         public static void StrokeText(LetteringMesh mesh, string text, Vector2 baseline, float cap, LetteringStyle style, System.Random random)
         {
             float unit = cap / CapUnits;
+            bool steady = style == LetteringStyle.Stencil || style == LetteringStyle.Printed;
             float slant = style == LetteringStyle.Hand ? .2f : style == LetteringStyle.Marker ? .12f : 0;
-            float width = (style == LetteringStyle.Hand ? .68f : style == LetteringStyle.Marker ? 1.05f : 1.35f) * unit;
-            float wobble = style == LetteringStyle.Stencil ? 0 : style == LetteringStyle.Marker ? .14f : .1f;
+            float width = (style == LetteringStyle.Hand ? .68f : style == LetteringStyle.Marker ? 1.05f : style == LetteringStyle.Printed ? .85f : 1.35f) * unit;
+            float wobble = steady ? 0 : style == LetteringStyle.Marker ? .14f : .1f;
             float x = baseline.x;
             foreach (char raw in text)
             {
                 char c = char.ToUpperInvariant(raw);
                 if (c == ' ') { x += SpaceAdvance * unit; continue; }
-                float scale = 1 + Jitter(random, style == LetteringStyle.Stencil ? 0 : .06f);
+                float scale = 1 + Jitter(random, steady ? 0 : .06f);
                 float lift = Jitter(random, wobble * 1.2f);
-                float turn = Jitter(random, style == LetteringStyle.Stencil ? 0 : .05f);
+                float turn = Jitter(random, steady ? 0 : .05f);
                 foreach (var stroke in Glyph(c))
                 {
                     var points = new Vector2[stroke.Length];

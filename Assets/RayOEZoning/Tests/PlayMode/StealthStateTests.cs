@@ -111,7 +111,7 @@ namespace RayOEZoning.Tests
             game.hazards[0].panAmplitude = 30;
             game.Advance(.675f);
             Assert.That(game.Alert, Is.EqualTo(.5f).Within(.002f));
-            foreach (var mode in new[] { GameMode.Notebook, GameMode.Keypad, GameMode.Paused })
+            foreach (var mode in new[] { GameMode.Keypad, GameMode.Paused })
             {
                 game.SetMode(mode);
                 float patrolTime = game.PatrolTime;
@@ -180,7 +180,6 @@ namespace RayOEZoning.Tests
             Assert.That(game.ExitUnlocked, Is.False);
             for (int i = 0; i < 4; i++) game.Backspace();
             foreach (char digit in "2469") game.AppendDigit(digit.ToString());
-            Assert.That(game.Notes.Count, Is.Zero);
             Assert.That(game.SubmitCode(), Is.True);
             Assert.That(game.ExitUnlocked, Is.True);
             Assert.That(game.Mode, Is.EqualTo(GameMode.Playing));
@@ -205,31 +204,29 @@ namespace RayOEZoning.Tests
             game.SetMode(GameMode.Paused);
             Assert.That(game.inputs.move, Is.EqualTo(Vector2.zero));
             Assert.That(game.inputs.look, Is.EqualTo(Vector2.zero));
-            game.ToggleNotebook();
-            Assert.That(game.Mode, Is.EqualTo(GameMode.Paused));
+            game.OpenKeypad();
+            Assert.That(game.Mode, Is.EqualTo(GameMode.Paused), "Another modal state cannot be replaced by the keypad.");
             game.CloseOverlay();
             game.keypad.position = Vector3.forward * 20;
             game.OpenKeypad();
             Assert.That(game.Mode, Is.EqualTo(GameMode.Playing));
-            game.ToggleNotebook();
+            game.keypad.position = Vector3.forward;
             game.OpenKeypad();
-            Assert.That(game.Mode, Is.EqualTo(GameMode.Notebook));
+            Assert.That(game.Mode, Is.EqualTo(GameMode.Keypad));
             game.CloseOverlay();
             Assert.That(game.Mode, Is.EqualTo(GameMode.Playing));
         }
 
         [UnityTest]
-        public IEnumerator AVisibleDistantClueAsksPlayerToMoveIntoReadingRange()
+        public IEnumerator TheOnlyPromptIsTheNearbyTerminal()
         {
             var game = Game(true);
-            game.clues[0].transform.position = new Vector3(0, 1.55f, 4);
-            yield return new WaitForSeconds(.1f);
+            yield return null;
             Assert.That(game.clues[0].IsVisible, Is.True);
-            Assert.That(game.Notes.Count, Is.Zero);
-            Assert.That(game.Prompt, Does.Contain("closer"));
-            game.clues[0].transform.position = new Vector3(0, 1.55f, 2);
-            yield return new WaitForSeconds(.1f);
-            Assert.That(game.Prompt, Does.Contain("steady"));
+            Assert.That(game.Prompt, Does.Contain("terminal"), "Clues need no prompt; the keypad one metre away does.");
+            game.keypad.position = Vector3.forward * 20;
+            yield return null;
+            Assert.That(game.Prompt, Is.Empty);
         }
 
         [UnityTest]
@@ -278,26 +275,23 @@ namespace RayOEZoning.Tests
         }
 
         [UnityTest]
-        public IEnumerator RealReadingRecordsOnceAndKnowledgeSurvivesCapture()
+        public IEnumerator RevealFollowsTheTorchThroughCaptureAndRetry()
         {
             var game = Game(true);
-            yield return new WaitForSeconds(1.0f);
-            Assert.That(game.Notes.Count, Is.EqualTo(1));
-            Assert.That(game.Notes[0].id, Is.EqualTo("Eye"));
+            yield return null;
+            Assert.That(game.clues[0].IsVisible, Is.True);
             game.SetTorch(false);
             yield return null;
             Assert.That(game.clues[0].IsVisible, Is.False);
-            Assert.That(game.Notes.Count, Is.EqualTo(1));
+            Assert.That(game.clues[0].hiddenRenderers[0].enabled, Is.False);
             game.hazards = new[] { Detector(game, DetectionShape.Sphere) };
             game.Advance(1.36f);
             Assert.That(game.Mode, Is.EqualTo(GameMode.Caught));
             game.Advance(.66f);
-            Assert.That(game.Notes.Count, Is.EqualTo(1));
             Assert.That(game.Mode, Is.EqualTo(GameMode.Playing));
-            yield return new WaitForSeconds(.9f);
-            Assert.That(game.Notes.Count, Is.EqualTo(1), "Repeated readings must not duplicate notes.");
-            game.NewGame();
-            Assert.That(game.Notes.Count, Is.Zero);
+            Assert.That(game.TorchOn, Is.True, "Retry hands the player a lit flashlight.");
+            yield return null;
+            Assert.That(game.clues[0].IsVisible, Is.True);
         }
     }
 }

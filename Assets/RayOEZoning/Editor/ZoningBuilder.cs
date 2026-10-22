@@ -47,9 +47,9 @@ namespace RayOEZoning.Editor
             Room(cold, 29, 45, -5, 3.5f, accentIce);
             Room(servers, 45, VaultStart, -4.5f, 4.5f, accentAmber);
             EndWall(entrance, 0, -4, 4);
-            Doorway(root.transform, 11, -4.5f, 6, -2.9f, -.7f, signLab);
-            Doorway(root.transform, 29, -5, 6, .6f, 2.8f, signCold);
-            Doorway(root.transform, 45, -5, 4.5f, -3.6f, -1.4f, signSecure);
+            Doorway(root.transform, 11, -4.5f, 6, -2.9f, -.7f);
+            Doorway(root.transform, 29, -5, 6, .6f, 2.8f);
+            Doorway(root.transform, 45, -5, 4.5f, -3.6f, -1.4f);
 
             StaffEntry(entrance, lights);
             AnalyticalLab(lab, lights);
@@ -83,7 +83,7 @@ namespace RayOEZoning.Editor
 
             // Every run rolls its own code and picks which of these surfaces carry it.
             var director = session.AddComponent<ClueDirector>();
-            director.game = game; director.font = font; director.spots = spots.ToArray(); director.randomizeOnPlay = true;
+            director.game = game; director.spots = spots.ToArray(); director.randomizeOnPlay = true;
             game.director = director;
             director.Apply(1);
 
@@ -174,7 +174,7 @@ namespace RayOEZoning.Editor
             Extinguisher(wall, new Vector3(-1.2f, 1.0f, z + .024f), 0);
         }
 
-        static void Doorway(Transform parent, float z, float minX, float maxX, float d0, float d1, Material zoneSign)
+        static void Doorway(Transform parent, float z, float minX, float maxX, float d0, float d1)
         {
             var doorway = Child(parent, "Doorway");
             WallBlock(doorway, new Vector3((minX + d0) * .5f, Ceiling * .5f, z), new Vector3(d0 - minX, Ceiling, .3f), true);
@@ -192,14 +192,13 @@ namespace RayOEZoning.Editor
                 var door = Placed(doorway, "Sliding Door", new Vector3(x, 0, z - .19f), 0);
                 Box(door, null, new Vector3(0, DoorHeight * .5f, 0), new Vector3(leaf, DoorHeight - .08f, .012f), glass).GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
                 Box(door, null, new Vector3(side * leaf * .5f, DoorHeight * .5f, 0), new Vector3(.05f, DoorHeight - .06f, .03f), doorFrame);
-                Box(door, null, new Vector3(0, .06f, 0), new Vector3(leaf, .1f, .03f), doorFrame);
-                Box(door, null, new Vector3(0, DoorHeight - .05f, 0), new Vector3(leaf, .06f, .03f), doorFrame);
+                Box(door, null, new Vector3(0, .06f, 0), new Vector3(leaf - .01f, .1f, .03f), doorFrame);
+                Box(door, null, new Vector3(0, DoorHeight - .05f, 0), new Vector3(leaf - .01f, .06f, .03f), doorFrame);
                 Box(door, null, new Vector3(-side * leaf * .3f, 1.1f, -.02f), new Vector3(.08f, .3f, .006f), stainless);
                 // Overhead track the leaf hangs from, fixed to the lintel.
                 Box(door, null, new Vector3(0, DoorHeight + .02f, .02f), new Vector3(leaf + .1f, .04f, .05f), darkMetal);
             }
             CardReader(doorway, new Vector3(d1 + .32f, 1.2f, z - .15f), 180, ledGreen);
-            WallSign(doorway, new Vector3((d0 + d1) * .5f, DoorHeight + .48f, z - .15f), 180, zoneSign, .38f);
         }
 
         // ------------------------------------------------------------ rooms
@@ -208,7 +207,8 @@ namespace RayOEZoning.Editor
             LockerBank(room, new Vector3(3.74f, 0, 3.7f), -90, 10);
             ChangingBench(room, new Vector3(2.55f, 0, 3.7f), 90, 3.0f);
             SecurityDesk(room, new Vector3(-2.55f, 0, 6.5f), 90, 2.1f);
-            Shelving(room, new Vector3(1.65f, 0, 7.4f), 0, 4.7f, 2.3f);
+            // Tall enough that the entry camera cannot see over it to heads near the spawn.
+            Shelving(room, new Vector3(1.65f, 0, 7.4f), 0, 4.68f, 2.65f);
             Dispenser(room, new Vector3(-4f, 1.25f, 1.6f), 90);
             WallClock(room, new Vector3(4f, 2.65f, 8.9f), -90);
             Extinguisher(room, new Vector3(-3.976f, 1.0f, 9.6f), 90);
@@ -280,7 +280,6 @@ namespace RayOEZoning.Editor
             Dewar(room, new Vector3(-4.3f, 0, 41.0f));
             InstrumentCabinet(room, new Vector3(-4.7f, 0, 44.0f), 90, .9f, 2.1f);
             WallSign(room, new Vector3(3.5f, 2.15f, 35.2f), -90, signCctv, .28f);
-            WallSign(room, new Vector3(-5f, 2.2f, 34.6f), 90, signCold, .34f);
             Extinguisher(room, new Vector3(3.476f, 1.0f, 43.5f), -90);
             CeilingGrid(room, lights, 29, 45, -5, 3.5f, new Color(.85f, .92f, 1f), 2.0f, new[] { false, false, false, false, true });
             // Clue surfaces.
@@ -298,7 +297,6 @@ namespace RayOEZoning.Editor
             // Clue niche between the chamber and the terminal.
             InstrumentCabinet(room, new Vector3(4.2f, 0, 54.6f), -90, 1.0f, 2.0f);
             WallSign(room, new Vector3(-4.5f, 2.2f, 47.0f), 90, signCctv, .28f);
-            WallSign(room, new Vector3(-4.5f, 2.2f, 52.0f), 90, signSecure, .34f);
             Extinguisher(room, new Vector3(-4.476f, 1.0f, 55.0f), 90);
             CeilingGrid(room, lights, 45, VaultStart, -4.5f, 4.5f, new Color(.86f, .9f, 1f), 2f, new[] { false, false, false, false });
             // Amber security beacons either side of the archive door, on wall brackets.
@@ -326,13 +324,14 @@ namespace RayOEZoning.Editor
             Solid(chamber, null, new Vector3(0, .1f, 0), new Vector3(size + .1f, .2f, size + .1f), darkMetal);
             Box(chamber, null, new Vector3(0, height + .1f, 0), new Vector3(size + .1f, .2f, size + .1f), enamel);
             Box(chamber, null, new Vector3(0, height - .005f, 0), new Vector3(size - .5f, .01f, size - .5f), nightPanel);
+            const float wall = height - .1f;
             for (int x = -1; x <= 1; x += 2)
                 for (int z = -1; z <= 1; z += 2)
-                    Solid(chamber, null, new Vector3(x * size * .5f, height * .5f + .1f, z * size * .5f), new Vector3(.1f, height, .1f), steel);
-            GlassPane(chamber, new Vector3(0, height * .5f + .1f, -size * .5f), new Vector3(size, height, .02f));
-            GlassPane(chamber, new Vector3(0, height * .5f + .1f, size * .5f), new Vector3(size, height, .02f));
-            GlassPane(chamber, new Vector3(-size * .5f, height * .5f + .1f, 0), new Vector3(.02f, height, size));
-            Solid(chamber, null, new Vector3(size * .5f, height * .5f + .1f, 0), new Vector3(.08f, height, size), enamel);
+                    Solid(chamber, null, new Vector3(x * (size * .5f - .005f), wall * .5f + .1f, z * (size * .5f - .005f)), new Vector3(.09f, wall, .09f), steel);
+            GlassPane(chamber, new Vector3(0, wall * .5f + .1f, -size * .5f), new Vector3(size, wall, .02f));
+            GlassPane(chamber, new Vector3(0, wall * .5f + .1f, size * .5f), new Vector3(size, wall, .02f));
+            GlassPane(chamber, new Vector3(-size * .5f, wall * .5f + .1f, 0), new Vector3(.02f, wall, size));
+            Solid(chamber, null, new Vector3(size * .5f, wall * .5f + .1f, 0), new Vector3(.07f, wall, size), enamel);
             var pedestal = Placed(chamber, "Pedestal", new Vector3(0, .2f, 0), 0);
             Cylinder(pedestal, null, new Vector3(0, .45f, 0), .28f, .9f, enamel);
             Cylinder(pedestal, null, new Vector3(0, .91f, 0), .32f, .03f, stainless);
@@ -347,7 +346,7 @@ namespace RayOEZoning.Editor
             float front = -size * .5f - .05f;
             Box(chamber, null, new Vector3(0, 1.36f, front - .02f), new Vector3(size - .1f, .05f, .03f), darkMetal);
             for (int side = -1; side <= 1; side += 2)
-                Box(chamber, null, new Vector3(side * (size * .5f - .02f), 1.36f, front + .01f), new Vector3(.06f, .08f, .1f), darkMetal);
+                Box(chamber, null, new Vector3(side * (size * .5f - .015f), 1.36f, front + .01f), new Vector3(.05f, .08f, .1f), darkMetal);
             WallMonitor(chamber, new Vector3(.6f, 1.36f, front - .035f), 180, screenMolecule);
             WallMonitorSpot(3, chamber, new Vector3(-.6f, 1.36f, front - .035f), 180);
         }
@@ -382,8 +381,8 @@ namespace RayOEZoning.Editor
             WallBlock(end, new Vector3(0, (2.8f + Ceiling) * .5f, 0), new Vector3(2.8f, Ceiling - 2.8f, .3f), false);
             for (int side = -1; side <= 1; side += 2)
             {
-                Box(end, null, new Vector3(side * 1.47f, 1.4f, -.02f), new Vector3(.14f, 2.8f, .42f), darkMetal);
-                Box(end, null, new Vector3(side * 1.47f, 1.4f, -.235f), new Vector3(.14f, 2.8f, .01f), hazardStripe);
+                Box(end, null, new Vector3(side * 1.465f, 1.4f, -.02f), new Vector3(.15f, 2.8f, .43f), darkMetal);
+                Box(end, null, new Vector3(side * 1.465f, 1.4f, -.24f), new Vector3(.15f, 2.8f, .01f), hazardStripe);
             }
             Box(end, null, new Vector3(0, 2.86f, -.02f), new Vector3(3.1f, .14f, .42f), darkMetal);
             Box(end, null, new Vector3(0, .003f, -.55f), new Vector3(2.8f, .006f, .3f), hazardStripe);
@@ -553,7 +552,6 @@ namespace RayOEZoning.Editor
             torch.color = new Color(1f, .93f, .80f); torch.shadows = LightShadows.Soft; torch.shadowBias = .015f; torch.shadowNormalBias = .06f; torch.shadowNearPlane = .03f;
             game.controller = controller; game.inputs = inputs; game.body = body; game.playerCamera = camera; game.torch = torch; game.torchOrigin = muzzle;
             var stance = player.AddComponent<StealthStance>(); stance.game = game; stance.controller = controller; stance.body = body; stance.cameraRoot = target; stance.obstructionMask = Obstructions; game.stance = stance;
-            PlayerBody(player.transform, game);
         }
 
         static GameObject Limb(Transform parent, Vector3 a, Vector3 b, float radius, Material material)
@@ -563,38 +561,6 @@ namespace RayOEZoning.Editor
             var go = Primitive(parent, null, PrimitiveType.Capsule, (a + b) * .5f, new Vector3(radius * 2, length * .5f, radius * 2), material, false);
             go.transform.localRotation = Quaternion.FromToRotation(Vector3.up, delta.sqrMagnitude > 1e-8f ? delta.normalized : Vector3.up);
             return go;
-        }
-
-        const string MannequinPath = "Assets/ThirdParty/Quaternius/Universal Animation Library[Standard]/Unity/UAL1_Standard.fbx";
-
-        static void PlayerBody(Transform player, StealthGame game)
-        {
-            var body = Child(player, "Body");
-            var visual = body.gameObject.AddComponent<PlayerBodyVisual>(); visual.game = game;
-            var source = AssetDatabase.LoadAssetAtPath<GameObject>(MannequinPath);
-            var model = (GameObject)PrefabUtility.InstantiatePrefab(source, body);
-            PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-            model.name = "Mannequin";
-            model.transform.localScale = Vector3.one * .95f;
-            var animator = model.GetComponent<Animator>(); if (!animator) animator = model.AddComponent<Animator>();
-            animator.runtimeAnimatorController = null; animator.applyRootMotion = false; animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-            visual.animator = animator; visual.model = model.transform;
-            var clips = AssetDatabase.LoadAllAssetsAtPath(MannequinPath).OfType<AnimationClip>().ToArray();
-            AnimationClip Clip(string name) => clips.First(c => c.name == "Armature|" + name);
-            visual.idle = Clip("Idle_Loop"); visual.walk = Clip("Walk_Loop"); visual.sprint = Clip("Sprint_Loop");
-            visual.crouchIdle = Clip("Crouch_Idle_Loop"); visual.crouchWalk = Clip("Crouch_Fwd_Loop");
-            visual.idle.SampleAnimation(model, 0);
-            var bones = model.GetComponentsInChildren<Transform>(true);
-            visual.hiddenBones = new[] { "neck_01", "upperarm_l", "upperarm_r" }.Select(n => bones.First(t => t.name == n)).ToArray();
-            visual.torso = bones.First(t => t.name == "spine_02");
-            visual.ApplyBoneMask();
-            foreach (var skin in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-            {
-                skin.sharedMaterials = new[] { sleeve, trousers };
-                skin.updateWhenOffscreen = true; skin.shadowCastingMode = ShadowCastingMode.Off;
-            }
-            SetLayer(body.gameObject, PlayerLayer);
-            visual.ApplyPose(PlayerStance.Standing, false, 0);
         }
 
         // ------------------------------------------------------------ text
