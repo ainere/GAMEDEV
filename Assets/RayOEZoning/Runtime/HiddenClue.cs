@@ -11,6 +11,7 @@ namespace RayOEZoning
         public LayerMask obstructionMask;
 
         public bool IsVisible { get; private set; }
+        public bool IsInSight { get; private set; }
         public float ReadProgress { get; private set; }
 
         private void Awake()
@@ -18,21 +19,22 @@ namespace RayOEZoning
             SetRenderersVisible(false);
         }
 
-        public bool Evaluate(Camera camera, bool torchOn, float range, float coneDegrees, float dt)
+        public bool Evaluate(Camera camera, bool torchOn, float range, float coneDegrees, float dt, Transform lightOrigin = null)
         {
             Transform targetTransform = anchor != null ? anchor : transform;
             bool visible = false;
 
             if (camera != null && torchOn && range > 0f)
             {
-                Vector3 fromCamera = targetTransform.position - camera.transform.position;
+                Transform emitter = lightOrigin ? lightOrigin : camera.transform;
+                Vector3 fromCamera = targetTransform.position - emitter.position;
                 float distance = fromCamera.magnitude;
                 if (distance > 0.001f && distance <= range)
                 {
                     float halfAngle = Mathf.Clamp(coneDegrees, 0f, 179.9f) * 0.5f;
                     float minimumDot = Mathf.Cos(halfAngle * Mathf.Deg2Rad);
-                    if (Vector3.Dot(camera.transform.forward, fromCamera / distance) >= minimumDot &&
-                        HasClearView(camera.transform.position, fromCamera / distance, distance))
+                    if (Vector3.Dot(emitter.forward, fromCamera / distance) >= minimumDot &&
+                        HasClearView(emitter.position, fromCamera / distance, distance))
                     {
                         visible = true;
                     }
@@ -40,7 +42,18 @@ namespace RayOEZoning
             }
 
             SetVisible(visible);
-            bool canRead = visible && Vector3.Distance(camera.transform.position, targetTransform.position) <= 3f;
+            IsInSight = false;
+            float readingDistance = float.PositiveInfinity;
+            if (visible)
+            {
+                Vector3 sight = targetTransform.position - camera.transform.position;
+                readingDistance = sight.magnitude;
+                Vector3 viewport = camera.WorldToViewportPoint(targetTransform.position);
+                IsInSight = viewport.z > 0 && viewport.x >= 0 && viewport.x <= 1 &&
+                    viewport.y >= 0 && viewport.y <= 1 && (readingDistance <= .001f ||
+                    HasClearView(camera.transform.position, sight / readingDistance, readingDistance));
+            }
+            bool canRead = IsInSight && readingDistance <= 3f;
             if (!canRead)
             {
                 ResetReading();

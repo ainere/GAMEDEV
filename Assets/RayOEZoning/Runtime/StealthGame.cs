@@ -23,10 +23,12 @@ namespace RayOEZoning
         public CharacterController body;
         public Camera playerCamera;
         public Light torch;
+        public Transform torchOrigin;
         public Transform spawn;
         public Transform keypad;
         public HazardDetector[] hazards;
         public HiddenClue[] clues;
+        public StealthStance stance;
         public float escapeZ = 27.5f;
         public float exposureSeconds = 1.35f;
         public float decaySeconds = 1.5f;
@@ -42,6 +44,7 @@ namespace RayOEZoning
         public string DetectorName { get; private set; } = string.Empty;
         public float PatrolTime { get; private set; }
         public bool Diagnostics { get; private set; }
+        public bool CanUseKeypad => Mode == GameMode.Playing && !ExitUnlocked && IsNearKeypad();
         public IReadOnlyList<ClueDefinition> Notes => notesView;
 
         public event System.Action Changed;
@@ -100,6 +103,16 @@ namespace RayOEZoning
                 controller.JumpHeight = 0f;
             }
 
+            if (stance == null && controller != null)
+                stance = controller.GetComponent<StealthStance>();
+            if (stance == null)
+                stance = FindAnyObjectByType<StealthStance>();
+            if (stance != null)
+                stance.Bind(this, controller, body,
+                    controller != null && controller.CinemachineCameraTarget != null
+                        ? controller.CinemachineCameraTarget.transform
+                        : null);
+
             initialized = true;
             SetTorch(true);
             ApplyModeState();
@@ -140,7 +153,6 @@ namespace RayOEZoning
 
             if (inputs != null)
             {
-                inputs.sprint = false;
                 inputs.jump = false;
             }
         }
@@ -152,9 +164,6 @@ namespace RayOEZoning
 
         private void LateUpdate()
         {
-            if (torch != null && playerCamera != null)
-                torch.transform.SetPositionAndRotation(playerCamera.transform.position, playerCamera.transform.rotation);
-
             // LateUpdate refreshes visibility with this render frame's final camera direction. Read
             // progress is advanced in Advance so behavior tests and the fixed-step game share a path.
             UpdateClues(0f);
@@ -260,6 +269,9 @@ namespace RayOEZoning
             if (controller != null)
                 controller.ResetView();
 
+            if (stance != null)
+                stance.ResetStance();
+
             SetPatrols(0f);
             ResetClueReading();
             SetMode(GameMode.Playing);
@@ -364,6 +376,8 @@ namespace RayOEZoning
         {
             bool playing = Mode == GameMode.Playing;
             ClearInput();
+            if (!playing && stance != null)
+                stance.ClearSprint();
 
             if (controller != null)
                 controller.enabled = playing;
@@ -402,6 +416,11 @@ namespace RayOEZoning
 
         private void UpdateClues(float dt)
         {
+            if (torch != null && playerCamera != null)
+            {
+                Transform emitter = torchOrigin ? torchOrigin : playerCamera.transform;
+                torch.transform.SetPositionAndRotation(emitter.position, emitter.rotation);
+            }
             if (clues == null)
                 return;
 
@@ -411,7 +430,8 @@ namespace RayOEZoning
                 if (clue == null)
                     continue;
 
-                bool read = clue.Evaluate(playerCamera, TorchOn, 8f, 50f, dt);
+                bool read = clue.Evaluate(playerCamera, TorchOn, torch ? torch.range : 8f,
+                    torch ? torch.spotAngle : 50f, dt, torch ? torch.transform : null);
                 if (read && Mode == GameMode.Playing)
                     RecordClue(clue.clueIndex);
             }
@@ -447,7 +467,7 @@ namespace RayOEZoning
                 for (int i = 0; i < clues.Length; i++)
                 {
                     HiddenClue clue = clues[i];
-                    if (clue == null || !clue.IsVisible || IsClueRecorded(clue.clueIndex))
+                    if (clue == null || !clue.IsInSight || IsClueRecorded(clue.clueIndex))
                         continue;
 
                     Transform anchor = clue.anchor != null ? clue.anchor : clue.transform;

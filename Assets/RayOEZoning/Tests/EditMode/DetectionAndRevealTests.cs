@@ -50,6 +50,29 @@ namespace RayOEZoning.Tests
             return hazard;
         }
 
+        HazardDetector DirectionalDetector(DetectionShape shape, Vector3 playerPosition)
+        {
+            var hazard = Detector(shape, playerPosition);
+            hazard.transform.position = new Vector3(0, 1.55f, 0);
+            hazard.home = hazard.transform.position;
+            hazard.lateralAmplitude = 0f;
+            hazard.useViewCone = true;
+            hazard.viewAngle = 60f;
+            hazard.viewRange = 5f;
+
+            var pan = Object("CCTV pan pivot").transform;
+            pan.SetParent(hazard.transform, false);
+            var lens = Object("Directional CCTV lens").transform;
+            lens.SetParent(pan, false);
+            hazard.panPivot = pan;
+            hazard.rayOrigin = lens;
+            hazard.panBaseEuler = Vector3.zero;
+            hazard.panAmplitude = 0f;
+            hazard.panPeriod = 8f;
+            Physics.SyncTransforms();
+            return hazard;
+        }
+
         [TestCase(DetectionShape.Sphere)]
         [TestCase(DetectionShape.Box)]
         [TestCase(DetectionShape.Capsule)]
@@ -78,6 +101,116 @@ namespace RayOEZoning.Tests
             cover.transform.position += Vector3.forward * 10;
             Physics.SyncTransforms();
             Assert.That(detector.Evaluate(), Is.True, "Moving cover away restores sight.");
+        }
+
+        [TestCase(DetectionShape.Sphere)]
+        [TestCase(DetectionShape.Box)]
+        [TestCase(DetectionShape.Capsule)]
+        public void DirectionalQueryDetectsInConeAndRealCoverBlocksSight(DetectionShape shape)
+        {
+            var detector = DirectionalDetector(shape, new Vector3(0, 0, 4));
+            Assert.That(detector.Evaluate(), Is.True, "An in-range player in front of the lens is detected.");
+            Assert.That(detector.HasPlayerOverlap, Is.True);
+            Assert.That(detector.HasSightSample, Is.True);
+
+            var cover = Object("Opaque CCTV cover");
+            cover.layer = 28;
+            cover.transform.position = new Vector3(0, 1.2f, 2);
+            cover.AddComponent<BoxCollider>().size = new Vector3(4, 3.2f, .2f);
+            Physics.SyncTransforms();
+
+            Assert.That(detector.Evaluate(), Is.False, "Cover between the lens and both player samples blocks sight.");
+            Assert.That(detector.HasPlayerOverlap, Is.True, "Occlusion must not alter the broadphase player query.");
+            Assert.That(detector.HasSightSample, Is.True);
+            Assert.That(detector.LastRayBlocked, Is.True);
+        }
+
+        [TestCase(DetectionShape.Sphere, 0f, -.1f, "behind the camera")]
+        [TestCase(DetectionShape.Box, 0f, -.1f, "behind the camera")]
+        [TestCase(DetectionShape.Capsule, 0f, -.1f, "behind the camera")]
+        [TestCase(DetectionShape.Sphere, 2.2f, 3.5f, "outside its viewing angle")]
+        [TestCase(DetectionShape.Box, 2.2f, 3.5f, "outside its viewing angle")]
+        [TestCase(DetectionShape.Capsule, 2.2f, 3.5f, "outside its viewing angle")]
+        [TestCase(DetectionShape.Sphere, 0f, 5.05f, "outside its radial range")]
+        [TestCase(DetectionShape.Box, 0f, 5.05f, "outside its radial range")]
+        [TestCase(DetectionShape.Capsule, 0f, 5.05f, "outside its radial range")]
+        public void DirectionalConeRejectsPlayerEvenWhenConservativeQueryOverlaps(
+            DetectionShape shape, float x, float z, string reason)
+        {
+            var detector = DirectionalDetector(shape, new Vector3(x, 0, z));
+            Assert.That(detector.Evaluate(), Is.False, "A player " + reason + " must not be detected.");
+            Assert.That(detector.HasPlayerOverlap, Is.True,
+                "The shape-specific broadphase should conservatively overlap this player's collider.");
+            Assert.That(detector.HasSightSample, Is.False, "Out-of-cone samples must not reach the LOS raycast stage.");
+            Assert.That(detector.LastRayBlocked, Is.False, "Cone rejection is not an obstruction hit.");
+        }
+
+        [TestCase(DetectionShape.Sphere)]
+        [TestCase(DetectionShape.Box)]
+        [TestCase(DetectionShape.Capsule)]
+        public void DirectionalQueryIncludesPlayerNearTheConeEdge(DetectionShape shape)
+        {
+            // The lens sits 1.5 m above the player's footprint sample, so straight ahead the footprint
+            // reaches the 30 degree half-angle at 1.5 / tan(29.5) metres.
+            float distance = 1.5f / Mathf.Tan(29.5f * Mathf.Deg2Rad);
+            var detector = DirectionalDetector(shape, new Vector3(0, 0, distance));
+
+            Assert.That(detector.Evaluate(), Is.True, "A footprint just inside the 30 degree half-angle is visible.");
+            Assert.That(detector.HasPlayerOverlap, Is.True,
+                "The CheckSphere/CheckBox/CheckCapsule broadphase must include the vision-cone edge.");
+            Assert.That(detector.HasSightSample, Is.True);
+
+            detector.player.position = new Vector3(0, 0, 1.5f / Mathf.Tan(31f * Mathf.Deg2Rad));
+            Physics.SyncTransforms();
+            Assert.That(detector.Evaluate(), Is.False, "A footprint just outside the half-angle is not lit, so it is not seen.");
+        }
+
+        [TestCase(DetectionShape.Sphere)]
+        [TestCase(DetectionShape.Box)]
+        [TestCase(DetectionShape.Capsule)]
+        public void MountedSearchlightOnlySeesPlayersStandingInItsLitPool(DetectionShape shape)
+        {
+            var detector = DirectionalDetector(shape, new Vector3(0, 0, 1.2f));
+            detector.transform.position = new Vector3(0, 2.9f, 0);
+            detector.home = detector.transform.position;
+            detector.rayOrigin.localRotation = Quaternion.Euler(30, 0, 0);
+            detector.viewAngle = 40f;
+            detector.viewRange = 10f;
+            Physics.SyncTransforms();
+            Vector3 head = detector.player.position + Vector3.up * 1.66f;
+            Assert.That(detector.IsWithinView(head), Is.True, "Close beneath the lens the head is inside the 3D cone...");
+            Assert.That(detector.Evaluate(), Is.False, "...but the feet are outside the lit floor pool, so the player is unseen.");
+            Assert.That(detector.HasPlayerOverlap, Is.True);
+            Assert.That(detector.HasSightSample, Is.False);
+
+            detector.player.position = new Vector3(0, 0, 2.85f / Mathf.Tan(30f * Mathf.Deg2Rad));
+            Physics.SyncTransforms();
+            Assert.That(detector.Evaluate(), Is.True, "Standing in the centre of the floor pool is seen.");
+        }
+
+        [TestCase(DetectionShape.Sphere)]
+        [TestCase(DetectionShape.Box)]
+        [TestCase(DetectionShape.Capsule)]
+        public void PanningLensRotatesTheActualSightDirection(DetectionShape shape)
+        {
+            var detector = DirectionalDetector(shape, new Vector3(0, 0, 3));
+            detector.panAmplitude = 45f;
+            Assert.That(detector.Evaluate(), Is.True);
+            Vector3 originalForward = detector.SightForward;
+
+            detector.SetPatrolTime(2f);
+            Physics.SyncTransforms();
+            Assert.That(Vector3.Angle(originalForward, detector.SightForward), Is.EqualTo(45f).Within(.1f));
+            Assert.That(detector.Evaluate(), Is.False, "The former target leaves the panned 60 degree cone.");
+            Assert.That(detector.HasPlayerOverlap, Is.True,
+                "Panning may not shrink the conservative query so far that it hides the cone rejection.");
+            Assert.That(detector.HasSightSample, Is.False);
+
+            Vector3 targetPosition = detector.SightOrigin + detector.SightForward * 3f;
+            targetPosition.y = 0f;
+            detector.player.position = targetPosition;
+            Physics.SyncTransforms();
+            Assert.That(detector.Evaluate(), Is.True, "A player along the updated lens direction is detected.");
         }
 
         [Test]
@@ -183,6 +316,43 @@ namespace RayOEZoning.Tests
             Physics.SyncTransforms();
             clue.Evaluate(camera, true, 8, 50, .02f);
             Assert.That(clue.IsVisible, Is.False);
+        }
+
+        [Test]
+        public void ClueUsesFlashlightMuzzleForConeAndOcclusionInsteadOfCameraOrigin()
+        {
+            var clue = Clue(out var camera);
+            var emitter = Object("Flashlight muzzle").transform;
+            emitter.position = new Vector3(1, 0, 0);
+            emitter.rotation = Quaternion.identity;
+
+            var blocker = Object("Camera-only ray obstruction");
+            blocker.layer = 28;
+            blocker.transform.position = new Vector3(0, 0, 1);
+            var collider = blocker.AddComponent<BoxCollider>();
+            collider.size = new Vector3(.2f, 2, .2f);
+            Physics.SyncTransforms();
+
+            clue.Evaluate(camera, true, 8, 60, .02f);
+            Assert.That(clue.IsVisible, Is.False, "The camera ray hits the obstacle directly ahead.");
+            emitter.rotation = Quaternion.Euler(0, 90, 0);
+            clue.Evaluate(camera, true, 8, 60, .02f, emitter);
+            Assert.That(clue.IsVisible, Is.False, "The emitter's own forward direction controls its cone.");
+            emitter.rotation = Quaternion.identity;
+            clue.Evaluate(camera, true, 8, 60, .02f, emitter);
+            Assert.That(clue.IsVisible, Is.True,
+                "The offset muzzle ray passes beside the camera-only obstacle and illuminates the clue.");
+            Assert.That(clue.IsInSight, Is.False, "Illumination cannot grant sight through camera-side cover.");
+            Assert.That(clue.Evaluate(camera, true, 8, 60, .81f, emitter), Is.False,
+                "A lit clue hidden from the player's eyes must not be transcribed through cover.");
+            Assert.That(clue.ReadProgress, Is.Zero);
+
+            blocker.transform.position = new Vector3(.5f, 0, 1);
+            Physics.SyncTransforms();
+            clue.Evaluate(camera, true, 8, 60, .02f, emitter);
+            Assert.That(clue.IsVisible, Is.False, "An obstacle crossing the actual muzzle ray hides the clue.");
+            clue.Evaluate(camera, true, 8, 60, .02f);
+            Assert.That(clue.IsVisible, Is.True, "The camera-origin ray remains clear after moving the blocker.");
         }
 
         [Test]

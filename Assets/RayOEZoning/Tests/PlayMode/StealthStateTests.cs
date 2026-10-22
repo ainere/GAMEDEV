@@ -105,6 +105,10 @@ namespace RayOEZoning.Tests
             var game = Game();
             game.hazards = new[] { Detector(game, DetectionShape.Sphere),
                 Detector(game, DetectionShape.Box), Detector(game, DetectionShape.Capsule) };
+            var pivot = Object("Panning camera head").transform;
+            pivot.SetParent(game.hazards[0].transform, false);
+            game.hazards[0].panPivot = pivot;
+            game.hazards[0].panAmplitude = 30;
             game.Advance(.675f);
             Assert.That(game.Alert, Is.EqualTo(.5f).Within(.002f));
             foreach (var mode in new[] { GameMode.Notebook, GameMode.Keypad, GameMode.Paused })
@@ -112,9 +116,11 @@ namespace RayOEZoning.Tests
                 game.SetMode(mode);
                 float patrolTime = game.PatrolTime;
                 float alert = game.Alert;
+                Quaternion rotation = pivot.rotation;
                 game.Advance(5);
                 Assert.That(game.Alert, Is.EqualTo(alert));
                 Assert.That(game.PatrolTime, Is.EqualTo(patrolTime));
+                Assert.That(Quaternion.Angle(pivot.rotation, rotation), Is.LessThan(.001f));
             }
             game.SetMode(GameMode.Playing);
             game.Advance(.676f);
@@ -123,6 +129,29 @@ namespace RayOEZoning.Tests
             Assert.That(game.Mode, Is.EqualTo(GameMode.Playing));
             Assert.That(game.Alert, Is.Zero);
             Assert.That(game.PatrolTime, Is.Zero);
+        }
+
+        [Test]
+        public void RevealUsesActualSpotlightSettingsAndHeldMuzzlePose()
+        {
+            var game = Game(true);
+            game.torch.range = 1;
+            game.Advance(.02f);
+            Assert.That(game.clues[0].IsVisible, Is.False);
+            game.torch.range = 8;
+            game.torch.spotAngle = 50;
+            game.Advance(.02f);
+            Assert.That(game.clues[0].IsVisible, Is.True);
+            game.torchOrigin = Object("Held light emitter").transform;
+            game.torchOrigin.position = new Vector3(1, 1.55f, 0);
+            game.torchOrigin.rotation = Quaternion.Euler(0, 90, 0);
+            game.Advance(.02f);
+            Assert.That(game.clues[0].IsVisible, Is.False);
+            game.torchOrigin.LookAt(game.clues[0].transform);
+            game.Advance(.02f);
+            Assert.That(game.clues[0].IsVisible, Is.True);
+            Assert.That(game.torch.transform.position, Is.EqualTo(game.torchOrigin.position));
+            Assert.That(Quaternion.Angle(game.torch.transform.rotation, game.torchOrigin.rotation), Is.LessThan(.001f));
         }
 
         [Test]
