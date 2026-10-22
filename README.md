@@ -42,7 +42,7 @@ Outputs       = Refer to branches for specific outputs
 | **Gameplay: Traversal** | `traversal` | Unity Traversal project files and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/traversal) |
 | **Gameplay: Laser Room** | `laser-room` | Unity laser-corridor survival scene, scripts and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/laser-room) |
 | **Gameplay: Knockdown** | `knockdown` | Unity carnival game with hinged duck targets, three conveyor rows, Static and Moving modes, and FPS mouse aiming | [View Output →](https://github.com/ainere/GAMEDEV/tree/knockdown) · [Scene](https://github.com/ainere/GAMEDEV/blob/knockdown/Assets/Scenes/Knockdown.unity) |
-
+| **Prototyping 2: Ray-OE zoning** | `ray-oe-zoning` | Unity stealth game with raycast and detection mechanics | [View Output →](https://github.com/ainere/GAMEDEV/tree/ray-oe-zoning)
 ---
 
 <div align="center">
