@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace RayOEZoning
 {
     /// <summary>
-    /// Minimal play interface: a crosshair dot, a detection ring that only appears while a camera has the player,
+    /// Minimal play interface: a detection ring that only appears while a camera has the player,
     /// one prompt line for the terminal, and plain overlays for the keypad and the end of the run.
     /// </summary>
     [DefaultExecutionOrder(1200)]
@@ -59,7 +59,6 @@ namespace RayOEZoning
             }
             vignette = Image(canvas, "Vignette", Color.clear, Vector2.zero, Vector2.zero); Stretch(vignette.rectTransform);
             vignette.sprite = RadialSprite();
-            Image(canvas, "Crosshair", Soft, Vector2.zero, new Vector2(4, 4));
 
             // Thin, translucent ring that fills from the bottom up both sides at once, white through amber to red.
             var ringRoot = Box(canvas, "Detection", Vector2.zero, Vector2.one * RingSize);
