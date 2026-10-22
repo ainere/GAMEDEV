@@ -3,18 +3,16 @@ using UnityEngine.Rendering;
 
 namespace RayOEZoning
 {
-    /// <summary>
-    /// Hidden writing revealed by the held flashlight. This component decides whether the writing can be lit at all
-    /// (light on, within range, near the cone, clear line from the lamp); the RevealInk shader then shows only the
-    /// strokes that actually fall inside the cone.
-    /// </summary>
+    // Hidden writing revealed by the held flashlight. This component decides whether the writing can be lit at all
+    // (light on, within range, near the cone, clear line from the lamp); the RevealInk shader then shows only the
+    // strokes that actually fall inside the cone.
     public sealed class HiddenClue : MonoBehaviour
     {
         public int clueIndex;
         public Transform anchor;
         public Renderer[] hiddenRenderers;
         public LayerMask obstructionMask;
-        /// <summary>Half the diagonal of the writing, so a lit edge still counts while the centre is outside the cone.</summary>
+        // Half the diagonal of the writing, so a lit edge still counts while the centre is outside the cone.
         public float radius = .2f;
 
         public bool IsVisible { get; private set; }
@@ -64,7 +62,7 @@ namespace RayOEZoning
         }
     }
 
-    /// <summary>Feeds the held flashlight's cone to the RevealInk shader.</summary>
+    // Feeds the held flashlight's cone to the RevealInk shader.
     public static class RevealInk
     {
         static readonly int Position = Shader.PropertyToID("_RevealLightPosition");

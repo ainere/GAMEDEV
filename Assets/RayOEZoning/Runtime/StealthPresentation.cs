@@ -6,10 +6,8 @@ using UnityEngine.UI;
 
 namespace RayOEZoning
 {
-    /// <summary>
-    /// Minimal play interface: a detection ring that only appears while a camera has the player,
-    /// one prompt line for the terminal, and plain overlays for the keypad and the end of the run.
-    /// </summary>
+    // Minimal play interface: a detection ring that only appears while a camera has the player,
+    // one prompt line for the terminal, and plain overlays for the keypad and the end of the run.
     [DefaultExecutionOrder(1200)]
     public sealed class StealthPresentation : MonoBehaviour
     {
@@ -19,7 +17,7 @@ namespace RayOEZoning
         public TMP_FontAsset font;
         public Light[] corridorLights;
         static readonly Color White = new Color(.94f, .95f, .95f), Soft = new Color(.94f, .95f, .95f, .6f);
-        /// <summary>Shared by the screen-edge vignette and the top of the detection ring.</summary>
+        // Shared by the screen-edge vignette and the top of the detection ring.
         static readonly Color Red = new Color(.8f, .03f, .02f);
         static readonly Color Amber = new Color(1f, .68f, .36f);
         static readonly Vector2 Center = new Vector2(.5f, .5f);
@@ -175,7 +173,7 @@ namespace RayOEZoning
 
         static Sprite trackSprite, fillSprite, arrowSprite, radial;
 
-        /// <summary>Anti-aliased ring. The fill version bakes the gradient by height: white at the bottom, red at the top.</summary>
+        // Anti-aliased ring. The fill version bakes the gradient by height: white at the bottom, red at the top.
         static Sprite RingSprite(bool gradient)
         {
             if (gradient ? fillSprite : trackSprite) return gradient ? fillSprite : trackSprite;
@@ -204,7 +202,7 @@ namespace RayOEZoning
             return sprite;
         }
 
-        /// <summary>Small arrow pointing up, rotated to face the watching camera.</summary>
+        // Small arrow pointing up, rotated to face the watching camera.
         static Sprite ArrowSprite()
         {
             if (arrowSprite) return arrowSprite;
@@ -271,7 +269,7 @@ namespace RayOEZoning
             text.font = font; text.text = value; text.fontSize = size; text.color = color; text.alignment = align; text.fontStyle = FontStyles.Bold;
             text.textWrappingMode = TextWrappingModes.Normal; text.overflowMode = TextOverflowModes.Overflow; text.raycastTarget = false; text.richText = false; return text;
         }
-        /// <summary>A thin dark edge keeps a line legible over the flashlight's bright pool.</summary>
+        // A thin dark edge keeps a line legible over the flashlight's bright pool.
         static void Outline(TMP_Text text) { text.outlineWidth = .22f; text.outlineColor = new Color32(0, 0, 0, 200); }
         static void Stretch(RectTransform rt) { rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = rt.offsetMax = Vector2.zero; }
     }

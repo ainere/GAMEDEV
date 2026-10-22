@@ -4,11 +4,9 @@ using UnityEngine.Playables;
 
 namespace RayOEZoning
 {
-    /// <summary>
-    /// First-person body: the CC0 Quaternius mannequin blended between idle, walk, sprint and crouch clips from the
-    /// actual stance and speed. The head is collapsed so it never blocks the view, and the right arm is solved with
-    /// two-bone IK so the mannequin's own hand closes round the held flashlight's grip.
-    /// </summary>
+    // First-person body: the CC0 Quaternius mannequin blended between idle, walk, sprint and crouch clips from the
+    // actual stance and speed. The head is collapsed so it never blocks the view, and the right arm is solved with
+    // two-bone IK so the mannequin's own hand closes round the held flashlight's grip.
     [DefaultExecutionOrder(1350)]
     public sealed class PlayerBodyVisual : MonoBehaviour
     {
@@ -20,22 +18,22 @@ namespace RayOEZoning
         public Vector3 standingOffset = new Vector3(0, 0, -.08f);
         public Vector3 crouchedOffset = new Vector3(0, 0, -.16f);
         public Vector3 proneOffset = new Vector3(0, .18f, -1.55f);
-        /// <summary>Extra step back while looking straight down, so the chest stays behind the camera.</summary>
+        // Extra step back while looking straight down, so the chest stays behind the camera.
         public float lookDownBack = .12f;
 
         [Header("Right arm")]
         public Transform upperArm, lowerArm, hand;
-        /// <summary>Knuckle and finger-base bones that define the hand's frame: middle, index and pinky.</summary>
+        // Knuckle and finger-base bones that define the hand's frame: middle, index and pinky.
         public Transform middleBase, indexBase, pinkyBase;
-        /// <summary>Tips of the middle finger and thumb, used to measure the closed hand and aim the thumb.</summary>
+        // Tips of the middle finger and thumb, used to measure the closed hand and aim the thumb.
         public Transform middleTip, thumbTip;
-        /// <summary>Grip point on the flashlight. Forward is the wanted knuckle direction, up the wanted thumb side.</summary>
+        // Grip point on the flashlight. Forward is the wanted knuckle direction, up the wanted thumb side.
         public Transform grip;
-        /// <summary>The held flashlight root, moved to meet the hand if the arm cannot reach it.</summary>
+        // The held flashlight root, moved to meet the hand if the arm cannot reach it.
         public Transform heldRoot;
-        /// <summary>Where the barrel's axis passes through the closed hand: along the knuckles, out of the palm, toward the thumb.</summary>
+        // Where the barrel's axis passes through the closed hand: along the knuckles, out of the palm, toward the thumb.
         public Vector3 gripInHand = new Vector3(.072f, .032f, -.004f);
-        /// <summary>Elbow hint in body space: out to the side and down.</summary>
+        // Elbow hint in body space: out to the side and down.
         public Vector3 elbowHint = new Vector3(.75f, -.6f, -.1f);
 
         [Header("Fingers (index, middle, ring, pinky, thumb; three joints each)")]
@@ -46,12 +44,12 @@ namespace RayOEZoning
             new Vector3(62, 58, 40), new Vector3(66, 60, 42), new Vector3(70, 62, 42), new Vector3(74, 64, 44)
         };
         public Vector3 thumbCurl = new Vector3(0, 25, 20);
-        /// <summary>How far past the index finger's middle joint, in millimetres toward the palm side, the thumb tip aims.</summary>
+        // How far past the index finger's middle joint, in millimetres toward the palm side, the thumb tip aims.
         public float thumbOpposition = 14;
 
-        /// <summary>Distance from shoulder to the wanted wrist position as a share of the arm's length.</summary>
+        // Distance from shoulder to the wanted wrist position as a share of the arm's length.
         public float Reach { get; private set; }
-        /// <summary>Radius of the curled middle finger's arc, measured round the grip.</summary>
+        // Radius of the curled middle finger's arc, measured round the grip.
         public float FistRadius { get; private set; }
         bool measured;
 
@@ -108,7 +106,7 @@ namespace RayOEZoning
             PoseUpperBody();
         }
 
-        /// <summary>Blends clip weights and places the model. Public so editor tools can preview a stance.</summary>
+        // Blends clip weights and places the model. Public so a stance can be previewed.
         public void ApplyPose(PlayerStance stance, bool sprinting, float dt)
         {
             if (dt <= 0)
@@ -140,7 +138,7 @@ namespace RayOEZoning
             model.localRotation = Quaternion.Euler(90 * prone, 0, 0) * Quaternion.Euler(0, 180, 0);
         }
 
-        /// <summary>Degrees the view is pitched below the body's horizon (negative when looking up).</summary>
+        // Degrees the view is pitched below the body's horizon (negative when looking up).
         public float LookPitch()
         {
             if (!game || !game.playerCamera) return 0;
@@ -148,7 +146,7 @@ namespace RayOEZoning
             return Vector3.SignedAngle(body.forward, view.forward, view.right);
         }
 
-        /// <summary>Hides the head, solves the arm onto the flashlight and closes the fingers. Runs after animation.</summary>
+        // Hides the head, solves the arm onto the flashlight and closes the fingers. Runs after animation.
         public void PoseUpperBody()
         {
             if (hiddenBones != null)
@@ -171,10 +169,8 @@ namespace RayOEZoning
             if (!measured) MeasureFist(f, p, t);
         }
 
-        /// <summary>
-        /// Finds where the barrel should pass through the closed hand: the centre of the arc the curled middle finger
-        /// makes, measured once in the hand's own frame (along the knuckles, out of the palm, toward the thumb).
-        /// </summary>
+        // Finds where the barrel should pass through the closed hand: the centre of the arc the curled middle finger
+        // makes, measured once in the hand's own frame (along the knuckles, out of the palm, toward the thumb).
         public void MeasureFist(Vector3 f, Vector3 p, Vector3 t)
         {
             if (!middleTip || !fingerJoints[5]) return;
@@ -198,7 +194,7 @@ namespace RayOEZoning
             t = (across - f * Vector3.Dot(across, f)).normalized;
         }
 
-        /// <summary>Two-bone IK. Returns where the wrist actually ended up.</summary>
+        // Two-bone IK. Returns where the wrist actually ended up.
         Vector3 SolveArm(Vector3 target)
         {
             Vector3 shoulder = upperArm.position;
@@ -219,7 +215,7 @@ namespace RayOEZoning
             return hand.position;
         }
 
-        /// <summary>Resets the fingers straight, then curls each joint toward the palm and wraps the thumb under.</summary>
+        // Resets the fingers straight, then curls each joint toward the palm and wraps the thumb under.
         void CloseFingers(Vector3 f, Vector3 p)
         {
             for (int i = 0; i < fingerJoints.Length; i++) if (fingerJoints[i]) fingerJoints[i].localRotation = straightRotations[i];

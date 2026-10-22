@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 
 namespace RayOEZoning
 {
-    /// <summary>The diagnostic beam samples the detector's actual cone and obstruction layer mask.</summary>
+    // The diagnostic beam samples the detector's actual cone and obstruction layer mask.
     [DefaultExecutionOrder(1100)]
     public sealed class ScannerVisual : MonoBehaviour
     {
@@ -15,7 +15,7 @@ namespace RayOEZoning
         public Renderer[] statusLights;
         public Light lamp;
         public Material shaftMaterial;
-        /// <summary>Inner/outer spot ratio. Close to 1 so the lit pool ends where the detection cone ends.</summary>
+        // Inner/outer spot ratio. Close to 1 so the lit pool ends where the detection cone ends.
         public const float InnerAngle = .93f;
         const int Around = 64, ShaftRays = 48, ShaftRings = 6;
         readonly List<LineRenderer> wires = new List<LineRenderer>();
@@ -93,7 +93,7 @@ namespace RayOEZoning
             outlineRenderer.shadowCastingMode = ShadowCastingMode.Off; outlineRenderer.receiveShadows = false;
         }
 
-        /// <summary>Rebuilds the visible light cone with every radial ray stopped by the detector's own obstruction mask.</summary>
+        // Rebuilds the visible light cone with every radial ray stopped by the detector's own obstruction mask.
         void UpdateShaft(Color color)
         {
             if (!shaftRenderer) return;
@@ -181,10 +181,8 @@ namespace RayOEZoning
             }
         }
 
-        /// <summary>
-        /// 1 when the player's eye is inside this beam. Seen from inside, the shaft's far wall reads as flat sheets,
-        /// so it fades out and the lit pool, outline and red vignette carry the warning instead.
-        /// </summary>
+        // 1 when the player's eye is inside this beam. Seen from inside, the shaft's far wall reads as flat sheets,
+        // so it fades out and the lit pool, outline and red vignette carry the warning instead.
         float ViewerInsideBeam()
         {
             if (!game || !game.playerCamera) return 0;

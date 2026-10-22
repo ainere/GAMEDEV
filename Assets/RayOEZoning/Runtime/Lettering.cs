@@ -6,19 +6,19 @@ namespace RayOEZoning
 {
     public enum LetteringStyle
     {
-        /// <summary>Clean monoline lettering: engraving, label tape, typed print.</summary>
+        // Clean monoline lettering: engraving, label tape, typed print.
         Printed,
-        /// <summary>Ballpoint or pencil handwriting.</summary>
+        // Ballpoint or pencil handwriting.
         Hand,
-        /// <summary>Thick felt-tip handwriting.</summary>
+        // Thick felt-tip handwriting.
         Marker,
-        /// <summary>Spray-painted stencil with bridged strokes.</summary>
+        // Spray-painted stencil with bridged strokes.
         Stencil,
-        /// <summary>Dot-matrix screen text.</summary>
+        // Dot-matrix screen text.
         Pixel
     }
 
-    /// <summary>Flat lettering mesh in a local XY plane, readable from local -Z.</summary>
+    // Flat lettering mesh in a local XY plane, readable from local -Z.
     public sealed class LetteringMesh
     {
         readonly List<Vector3> vertices = new List<Vector3>();
@@ -60,7 +60,7 @@ namespace RayOEZoning
             for (int i = 0; i < sides; i++) Triangle(first, first + 1 + i, first + 1 + (i + 1) % sides);
         }
 
-        /// <summary>A pen stroke. Round strokes get round joints and caps; square strokes get flat extended caps.</summary>
+        // A pen stroke. Round strokes get round joints and caps; square strokes get flat extended caps.
         public void Stroke(IList<Vector2> points, float width, bool round)
         {
             if (points.Count < 2) return;
@@ -95,7 +95,7 @@ namespace RayOEZoning
         }
     }
 
-    /// <summary>Stroke font, dot-matrix font and symbol outlines drawn without any font or texture dependency.</summary>
+    // Stroke font, dot-matrix font and symbol outlines drawn without any font or texture dependency.
     public static class Lettering
     {
         // Glyphs on a 4 x 6 grid (baseline 0, cap height 6). Strokes separated by '|'.
@@ -176,7 +176,7 @@ namespace RayOEZoning
 
         public const float CapUnits = 6, Advance = 5.6f, SpaceAdvance = 3.6f;
 
-        /// <summary>Width of a line of stroke text with the given cap height.</summary>
+        // Width of a line of stroke text with the given cap height.
         public static float StrokeWidth(string text, float cap)
         {
             float unit = cap / CapUnits, width = 0;
@@ -184,7 +184,7 @@ namespace RayOEZoning
             return Mathf.Max(0, width - 1.6f * unit);
         }
 
-        /// <summary>Width of a line of dot-matrix text whose dots are the given pitch.</summary>
+        // Width of a line of dot-matrix text whose dots are the given pitch.
         public static float PixelWidth(string text, float pitch) => Mathf.Max(0, text.Length * 6 - 1) * pitch;
 
         static List<Vector2[]> Glyph(char c)
@@ -205,7 +205,7 @@ namespace RayOEZoning
             return strokes;
         }
 
-        /// <summary>Writes stroke text starting at the baseline-left point.</summary>
+        // Writes stroke text starting at the baseline-left point.
         public static void StrokeText(LetteringMesh mesh, string text, Vector2 baseline, float cap, LetteringStyle style, System.Random random)
         {
             float unit = cap / CapUnits;
@@ -239,7 +239,7 @@ namespace RayOEZoning
             }
         }
 
-        /// <summary>Breaks closed loops and trims stroke ends so the shape could be cut from a stencil sheet.</summary>
+        // Breaks closed loops and trims stroke ends so the shape could be cut from a stencil sheet.
         static void StencilStroke(LetteringMesh mesh, Vector2[] points, float width, float gap)
         {
             bool closed = points.Length > 3 && (points[0] - points[points.Length - 1]).sqrMagnitude < 1e-4f;
@@ -277,7 +277,7 @@ namespace RayOEZoning
             return list.ToArray();
         }
 
-        /// <summary>Writes dot-matrix text; baseline-left is the bottom-left dot centre.</summary>
+        // Writes dot-matrix text; baseline-left is the bottom-left dot centre.
         public static void PixelText(LetteringMesh mesh, string text, Vector2 baseline, float pitch, float dot = .8f)
         {
             float x = baseline.x;
@@ -395,7 +395,7 @@ namespace RayOEZoning
             return points;
         }
 
-        /// <summary>Draws a symbol centred on a point with the given half size.</summary>
+        // Draws a symbol centred on a point with the given half size.
         public static void SymbolStrokes(LetteringMesh mesh, string name, Vector2 center, float half, LetteringStyle style, float width, System.Random random)
         {
             float wobble = style == LetteringStyle.Hand || style == LetteringStyle.Marker ? .045f : 0;
@@ -415,7 +415,7 @@ namespace RayOEZoning
             }
         }
 
-        /// <summary>Rasterises a symbol onto a dot grid, as a screen would show it.</summary>
+        // Rasterises a symbol onto a dot grid, as a screen would show it.
         public static void SymbolPixels(LetteringMesh mesh, string name, Vector2 center, float half, int grid = 13)
         {
             var strokes = Symbol(name);

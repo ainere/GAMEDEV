@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 
 namespace RayOEZoning
 {
-    /// <summary>Lays a clue out on its surface in the lettering that suits it.</summary>
+    // Lays a clue out on its surface in the lettering that suits it.
     public static class ClueWriter
     {
         enum Align { Left, Center }
@@ -156,7 +156,7 @@ namespace RayOEZoning
         }
 
         // ------------------------------------------------------------ marks
-        /// <summary>Approximate line width per character, in cap heights.</summary>
+        // Approximate line width per character, in cap heights.
         static float Ratio(LetteringStyle style) => style == LetteringStyle.Pixel ? 6f / 7f : Lettering.Advance / Lettering.CapUnits;
 
         static float Fit(Page page, string text, float width) => width / Mathf.Max(1, text.Length * Ratio(page.style));

@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace RayOEZoning
 {
-    /// <summary>Rolls a new code and clue arrangement for each run and writes it onto the chosen surfaces.</summary>
+    // Rolls a new code and clue arrangement for each run and writes it onto the chosen surfaces.
     [DefaultExecutionOrder(900)]
     public sealed class ClueDirector : MonoBehaviour
     {
         public StealthGame game;
         public ClueSpot[] spots;
         public bool randomizeOnPlay = true;
-        /// <summary>Seed of the arrangement currently written into the scene.</summary>
+        // Seed of the arrangement currently written into the scene.
         public int seed = 1;
 
         public PuzzleRun Run { get; private set; }

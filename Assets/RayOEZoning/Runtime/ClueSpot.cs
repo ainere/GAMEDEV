@@ -16,16 +16,16 @@ namespace RayOEZoning
         Memo
     }
 
-    /// <summary>A surface that can carry hidden writing. The face's local XY plane is the writable area, read from local -Z.</summary>
+    // A surface that can carry hidden writing. The face's local XY plane is the writable area, read from local -Z.
     public sealed class ClueSpot : MonoBehaviour
     {
         public ClueMedium medium;
-        /// <summary>0 entrance, 1 lab, 2 cold room, 3 server room. Each zone gets one code digit.</summary>
+        // 0 entrance, 1 lab, 2 cold room, 3 server room. Each zone gets one code digit.
         public int zone;
         public bool allowOrder = true;
         public Transform face;
         public Vector2 area = new Vector2(.2f, .25f);
-        /// <summary>RevealInk material: the writing only exists where the flashlight cone falls.</summary>
+        // RevealInk material: the writing only exists where the flashlight cone falls.
         public Material ink;
         public HiddenClue clue;
 

@@ -44,7 +44,7 @@ namespace RayOEZoning
         public float PatrolTime { get; private set; }
         public bool Diagnostics { get; private set; }
         public bool CanUseKeypad => Mode == GameMode.Playing && !ExitUnlocked && IsNearKeypad();
-        /// <summary>This run's code and clues. Falls back to the fixed classic puzzle when nothing has rolled one.</summary>
+        // This run's code and clues. Falls back to the fixed classic puzzle when nothing has rolled one.
         public PuzzleRun Puzzle => puzzle ?? PuzzleCatalog.Classic;
 
         public event System.Action Changed;
@@ -167,7 +167,7 @@ namespace RayOEZoning
             UpdatePrompt();
         }
 
-        /// <summary>Installs a freshly rolled puzzle and the clue surfaces that carry it.</summary>
+        // Installs a freshly rolled puzzle and the clue surfaces that carry it.
         public void SetPuzzle(PuzzleRun run, HiddenClue[] active)
         {
             puzzle = run;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace RayOEZoning
 {
-    /// <summary>Irregular equipment activity lights. Purely cosmetic and independent of game state.</summary>
+    // Irregular equipment activity lights. Purely cosmetic and independent of game state.
     public sealed class StatusBlinker : MonoBehaviour
     {
         public Renderer[] lights;

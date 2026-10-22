@@ -2,15 +2,15 @@ using UnityEngine;
 
 namespace RayOEZoning
 {
-    /// <summary>Cosmetic first-person lamp. Its model never controls the beam's aim.</summary>
+    // Cosmetic first-person lamp. Its model never controls the beam's aim.
     [DefaultExecutionOrder(1300)]
     public sealed class HeldFlashlightVisual : MonoBehaviour
     {
         public Renderer lampGlass;
         public Transform poseRoot;
-        /// <summary>Added to the rest pose at full upward and full downward look, so the arm can always reach it.</summary>
+        // Added to the rest pose at full upward and full downward look, so the arm can always reach it.
         public Vector3 lookUpOffset = new Vector3(-.01f, -.1f, -.06f), lookDownOffset = new Vector3(0, .05f, .1f);
-        /// <summary>The torch reaches its full intensity on surfaces this far away.</summary>
+        // The torch reaches its full intensity on surfaces this far away.
         const float FullBrightnessDistance = 6f;
         StealthGame game;
         MaterialPropertyBlock block;
@@ -53,7 +53,7 @@ namespace RayOEZoning
             }
             // Auto-exposure: scale with distance squared so whatever the beam lands on is lit about as brightly at
             // arm's length as at 6 m, and paper close up never washes out to white.
-            // Illumination origin, angle, range, on/off state and puzzle tests remain in StealthGame.
+            // The beam's origin, angle, range and on/off state stay in StealthGame.
             if (game && game.torch && game.torchOrigin)
             {
                 float target = maximumIntensity;

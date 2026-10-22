@@ -9,7 +9,7 @@ namespace RayOEZoning
         Order
     }
 
-    /// <summary>One readable record: a symbol and its digit, or ordering statements about the symbols.</summary>
+    // One readable record: a symbol and its digit, or ordering statements about the symbols.
     [Serializable]
     public sealed class ClueDefinition
     {
@@ -28,14 +28,14 @@ namespace RayOEZoning
             new ClueDefinition { id = id, kind = ClueKind.Order, symbol = string.Empty, digit = string.Empty, statements = statements };
     }
 
-    /// <summary>A whole run: four symbol digits and the two order notes that sort them into the keypad code.</summary>
+    // A whole run: four symbol digits and the two order notes that sort them into the keypad code.
     public sealed class PuzzleRun
     {
         public readonly int seed;
         public readonly string code;
-        /// <summary>Symbols in keypad order.</summary>
+        // Symbols in keypad order.
         public readonly string[] order;
-        /// <summary>Code fragments first, then order notes.</summary>
+        // Code fragments first, then order notes.
         public readonly ClueDefinition[] clues;
 
         public PuzzleRun(int seed, string code, string[] order, ClueDefinition[] clues)
@@ -57,7 +57,7 @@ namespace RayOEZoning
 
         static readonly string[] Places = { "FIRST", "SECOND", "THIRD", "LAST" };
 
-        /// <summary>The fixed puzzle used when nothing randomises the run (tests and tools).</summary>
+        // The fixed puzzle used when no run has been rolled, so every check sees the same code.
         public static readonly PuzzleRun Classic = new PuzzleRun(0, "2469", new[] { "Eye", "Gate", "Moon", "Crown" }, new[]
         {
             ClueDefinition.Code("Eye", "2"),
@@ -99,7 +99,7 @@ namespace RayOEZoning
             }
         }
 
-        /// <summary>Builds a fresh run. The order notes together have exactly one solution; neither note alone does.</summary>
+        // Builds a fresh run. The order notes together have exactly one solution; neither note alone does.
         public static PuzzleRun Generate(int seed)
         {
             var random = new Random(seed);
@@ -125,7 +125,7 @@ namespace RayOEZoning
             return new PuzzleRun(seed, string.Concat(digits), order, fragments.ToArray());
         }
 
-        /// <summary>Counts the symbol orders that satisfy every statement, for tests and tools.</summary>
+        // Counts the symbol orders that satisfy every statement, to confirm a run has one answer.
         public static int Solutions(PuzzleRun run)
         {
             int count = 0;
@@ -208,7 +208,7 @@ namespace RayOEZoning
             return count;
         }
 
-        /// <summary>Every assignment of the four symbols to keypad positions.</summary>
+        // Every assignment of the four symbols to keypad positions.
         static List<int[]> Permutations()
         {
             var result = new List<int[]>();
