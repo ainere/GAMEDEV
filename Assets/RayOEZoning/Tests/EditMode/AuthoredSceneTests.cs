@@ -24,7 +24,9 @@ namespace RayOEZoning.Tests
             Assert.That(game.playerCamera.transform.IsChildOf(game.controller.transform), Is.True);
             Assert.That(game.spawn, Is.Not.EqualTo(game.body.transform));
             Assert.That(game.hazards.Select(h => h.shape).Distinct().Count(), Is.EqualTo(3));
-            Assert.That(game.clues, Has.Length.EqualTo(4));
+            Assert.That(game.clues, Has.Length.EqualTo(6));
+            Assert.That(game.director, Is.Not.Null);
+            Assert.That(game.director.spots.Select(s => s.zone).Distinct().Count(), Is.EqualTo(4));
             Assert.That(game.keypad, Is.Not.Null);
             Assert.That(game.escapeZ, Is.InRange(55f, 65f), "The laboratory is a modest expansion of the previous 48 m hall.");
             Assert.That(game.hazards.Length, Is.InRange(5, 8));
@@ -77,8 +79,8 @@ namespace RayOEZoning.Tests
         {
             EditorSceneManager.OpenScene(Scene);
             var presentation = Object.FindAnyObjectByType<StealthPresentation>();
-            var ports = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None)
-                .Where(t => t.name == "Laser emitter port" || t.name == "Laser receiver port").ToArray();
+            var ports = presentation.exitGrid.transform.parent.GetComponentsInChildren<Transform>()
+                .Where(t => t.name.StartsWith("Sphere")).ToArray();
             var beams = presentation.exitGrid.GetComponentsInChildren<LineRenderer>();
             Assert.That(beams, Is.Not.Empty);
             Assert.That(ports.Length, Is.EqualTo(beams.Length * 2));
@@ -98,15 +100,16 @@ namespace RayOEZoning.Tests
         }
 
         [Test]
-        public void EachClueCanBeIlluminatedAndReadFromItsAuthoredApproach()
+        public void EachClueSurfaceCanBeIlluminatedAndReadFromItsApproach()
         {
             EditorSceneManager.OpenScene(Scene);
             var game = Object.FindAnyObjectByType<StealthGame>();
-            for (int i = 0; i < game.clues.Length; i++)
+            foreach (var spot in game.director.spots)
             {
-                var clue = game.clues[i];
-                var target = clue.anchor ? clue.anchor.position : clue.transform.position;
-                Vector3 approach = target - clue.transform.forward * 1.5f;
+                var clue = spot.clue;
+                var target = clue.anchor.position;
+                // The clue face's +Z points into the surface it is written on.
+                Vector3 approach = target - clue.anchor.forward * 1.5f;
                 approach.y = 1.71f;
                 game.playerCamera.transform.position = approach;
                 game.playerCamera.transform.LookAt(target);
@@ -114,8 +117,7 @@ namespace RayOEZoning.Tests
                 Physics.SyncTransforms();
                 clue.ResetReading();
                 Assert.That(clue.Evaluate(game.playerCamera, true, game.torch.range, game.torch.spotAngle, .81f,
-                    game.torch.transform), Is.True,
-                    PuzzleCatalog.Clues[i].title + " needs an unobstructed reading approach within 3 m.");
+                    game.torch.transform), Is.True, spot.name + " needs an unobstructed reading approach within 3 m.");
                 clue.Evaluate(game.playerCamera, false, 8, 50, 0);
                 Assert.That(clue.hiddenRenderers.All(r => !r.enabled), Is.True);
             }

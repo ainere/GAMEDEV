@@ -1,5 +1,19 @@
 # Ray-OE Zoning verification
 
+## Remodel revision (2026-10-22)
+
+This revision changed the puzzle, interface, CCTV models, first person body and flashlight, prop placement and hierarchy names. Collision geometry, camera placement, sweep timing and detection rules were left as they were. At the user's direction the gameplay suites and route playback were **not** re-run for this revision.
+
+- All runtime, editor, test and local QA assemblies compile in Unity 6000.6.0f1 with no errors.
+- `ZoningBuilder.Create` rebuilt the scene without errors: six CCTV cameras and 14 clue surfaces.
+- Still renders reviewed every clue surface with both a code digit and an order note, each CCTV close up, the security desk, lab benches, workstation, chamber screens, server racks and cable tray, pipes, the archive terminal and beacons, and the body and hand looking down while standing and crouched.
+- A Windows review build captured the real HUD: idle crosshair, the detection ring partly and fully filled with its direction marker, DETECTED on capture, the noted toast, notebook, keypad and end screen. The build rolled a different code from the scene's preview seed, so the per-run roll works. No exceptions in the player log.
+- Standing and crouched camera-coverage maps place every clue surface's reading position outside camera coverage; the four lab surfaces need a crouch, like the previous lab record.
+- Tests were updated for the new API, not run: six active clues per run, every clue surface readable from its approach, and 200 rolled puzzles each with exactly one solution and neither order note sufficient alone.
+
+The results below are from the previous revision (commit `b31acc6`).
+
+
 Verified on 2026-10-22 with Unity 6000.6.0f1 on Windows 11, after the dark-laboratory redesign. These results replace the earlier three-camera and first six-camera reports; neither of those applies to this level.
 
 ## Automated tests

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
@@ -371,22 +372,30 @@ namespace RayOEZoning.Tests
         }
 
         [Test]
-        public void EnvironmentalCluesHaveExactlyOneSolution()
+        public void EveryRolledPuzzleHasExactlyOneSolutionSplitAcrossTwoNotes()
         {
-            var solutions = new List<string>();
-            var names = new[] { "Eye", "Moon", "Gate", "Crown" };
-            foreach (var a in names) foreach (var b in names)
-            foreach (var c in names) foreach (var d in names)
+            Assert.That(PuzzleCatalog.Solutions(PuzzleCatalog.Classic), Is.EqualTo(1));
+            Assert.That(PuzzleCatalog.Classic.code, Is.EqualTo("2469"));
+            var codes = new HashSet<string>();
+            for (int seed = 1; seed <= 200; seed++)
             {
-                var order = new[] { a, b, c, d };
-                if (new HashSet<string>(order).Count != 4) continue;
-                if (a == "Eye" && d != "Gate" &&
-                    System.Array.IndexOf(order, "Crown") == System.Array.IndexOf(order, "Moon") + 1)
-                    solutions.Add(string.Join(",", order));
+                var run = PuzzleCatalog.Generate(seed);
+                codes.Add(run.code);
+                Assert.That(run.code, Has.Length.EqualTo(4), "Seed " + seed);
+                Assert.That(run.order, Has.Length.EqualTo(4));
+                Assert.That(new HashSet<string>(run.order).Count, Is.EqualTo(4), "Symbols in one run are distinct.");
+                Assert.That(run.clues.Count(c => c.kind == ClueKind.Code), Is.EqualTo(4));
+                Assert.That(run.clues.Count(c => c.kind == ClueKind.Order), Is.EqualTo(2));
+                Assert.That(PuzzleCatalog.Solutions(run), Is.EqualTo(1), "Seed " + seed + " must have one keypad order.");
+                for (int i = 0; i < 4; i++)
+                    Assert.That(run.clues.First(c => c.symbol == run.order[i]).digit, Is.EqualTo(run.code[i].ToString()));
+                foreach (var note in run.clues.Where(c => c.kind == ClueKind.Order))
+                {
+                    var alone = new PuzzleRun(run.seed, run.code, run.order, new[] { note });
+                    Assert.That(PuzzleCatalog.Solutions(alone), Is.GreaterThan(1), "One order note alone must not give the answer away.");
+                }
             }
-            Assert.That(solutions, Is.EqualTo(new[] { "Eye,Gate,Moon,Crown" }));
-            Assert.That(PuzzleCatalog.Clues.Length, Is.EqualTo(4));
-            Assert.That(PuzzleCatalog.Code, Is.EqualTo("2469"));
+            Assert.That(codes.Count, Is.GreaterThan(150), "Codes must change from run to run.");
         }
     }
 }

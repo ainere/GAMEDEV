@@ -6,10 +6,10 @@ The level is a maintained research laboratory after hours. The player is breakin
 
 | Zone | Extent | Notes |
 | --- | --- | --- |
-| Staff entry | z 0–11, 8 m wide | Lockers, a night security desk with camera-feed monitors, a supply-shelf divider. First record on the notice wall by the entrance. |
-| Analytical laboratory | z 11–29, 10.5 m wide | Long bench islands run with the route, fume hoods, a tall storage island, an inspection workstation with the clipped record, an optional crouch pipe chase. |
-| Specimen cold storage | z 29–45, 8.5 m wide | Two freezer rows form a serpentine. A prone-only cryo-line crawlspace cuts through the second row. Record on a cold-store controller. |
-| Secure research | z 45–59.5, 9 m wide | Compute racks with live activity lights, a glass research chamber, the archive terminal and the laser-gated blast door. |
+| Staff entry | z 0–11, 8 m wide | Lockers, a night security desk with camera-feed monitors, a supply-shelf divider. Clue surfaces: wall plaque, sticky note on a locker, clipboard by the staff door. |
+| Analytical laboratory | z 11–29, 10.5 m wide | Long bench islands run with the route, fume hoods, a tall storage island, a workstation with a pinboard, an optional crouch pipe chase. Clue surfaces: whiteboard, bench monitor, desk paper, pinboard clipboard, all readable crouched from the left lane. |
+| Specimen cold storage | z 29–45, 8.5 m wide | Two freezer rows form a serpentine. A prone-only cryo-line crawlspace cuts through the second row. Clue surfaces: LCD control panel, freezer label, clipboard, wall stencil. |
+| Secure research | z 45–59.5, 9 m wide | Compute racks with live activity lights, a glass research chamber with rail-mounted screens, the archive terminal and the laser-gated blast door. Clue surfaces: chamber screen, taped memo, sticky note on a rack. |
 | Archive vault | z 59.5–64.5 | Drawer banks and the glowing sample cassette under a spotlight. |
 
 Doorways alternate sides (left, right, left, centre), so there is never a straight sightline down the building. The route to the archive door is about 60 m, a modest expansion of the original 48 m hall.
@@ -17,6 +17,8 @@ Doorways alternate sides (left, right, left, centre), so there is never a straig
 ## Light and darkness
 
 Ambient light is low but never zero, so silhouettes stay readable. Each room has at most one or two dim night lights. Emissive monitors, LEDs, exit and zone pictograms, freezer interiors and the amber beacons at the archive door give orientation. The held flashlight is warm, bright and 18 m long, which makes it the main way to see detail and the only way to reveal records. It dims smoothly on close surfaces so records stay legible at reading distance.
+
+Each CCTV is a bullet camera: a grey housing with a sun shield, a dark lens bezel and a red recording diode, hung from a wall arm or a ceiling drop rod on a swivel above the pan axis, so the head turns under a fixed bracket.
 
 CCTV searchlights are cold white and the brightest lights in the level. Their inner and outer spot angles are nearly equal, so each floor pool has a crisp edge. A soft volumetric shaft makes the beam visible in the air, and each radial ray is clipped where it meets cover, so the shaft stops at a cabinet just like the light does. A thin outline traces the floor pool. The shaft, outline and light turn red while the camera sees the player.
 
@@ -47,12 +49,18 @@ Standing, crouched and prone heights are 1.8, 1.1 and 0.56 m, with speeds of 2.3
 
 ## Player presentation
 
-A gloved hand holds a modelled tactical flashlight, and the beam comes from its actual muzzle. Looking down shows the legs and boots of the CC0 Quaternius mannequin, blended between idle, walk, sprint, crouch-idle and crouch-walk clips from the real stance and speed; its upper body is collapsed so it never blocks the view. When prone, the body lies behind the camera.
+A gloved fist holds a modelled tactical flashlight, and the beam comes from its actual muzzle. A faint fill light that affects only the player layer keeps the hand readable in the dark. Looking down shows the legs and boots of the CC0 Quaternius mannequin, blended between idle, walk, sprint, crouch-idle and crouch-walk clips from the real stance and speed. The rig faces -Z, so it is turned 180° to face the view (the same offset the Laser Corridor avatar uses). Its head and arms are collapsed and the chest is shrunk into the waist so it never blocks the view or the flashlight. When prone, the body lies behind the camera.
 
 ## Puzzle and interface
 
-The clue mappings are Eye=2, Moon=6, Gate=4 and Crown=9. The ordering statements ("The Eye is first", "The Gate is not last", "The Crown comes immediately after the Moon") have exactly one solution, 2469. The keypad does not require all clues to be found first.
+`ClueDirector` rolls a new run when the scene starts and again on "play again". `PuzzleCatalog.Generate` picks four distinct symbols from sixteen (Eye, Moon, Gate, Crown, Star, Sun, Key, Bell, Fish, Leaf, Bolt, Anchor, Drop, Spiral, Flame, Tree) and a random digit for each. It then builds a minimal set of ordering statements (place, not-first/last, right-after, before) with exactly one solution, and splits it into two order notes so neither is enough alone. The code digits and the order are separate pieces of evidence.
 
-The interface uses icons and key caps: flashlight, notes and four record dots at bottom left, stance at bottom right, and the detection meter at bottom centre with caution and danger bands. Directional chevrons around the crosshair show which camera sees you. A red vignette rises with the alert. The only written words in the game are the discovered record content and key labels.
+Fourteen `ClueSpot` surfaces exist, three or four per room. Each run puts one code digit in every room and the two order notes in two different rooms, on surfaces with room for sentences. `ClueWriter` lays each clue out in lettering that suits the surface: TextMeshPro for printed plaques, labels and memos; a locally authored single-stroke font with per-letter jitter for ballpoint, pencil and marker handwriting; the same font with bridged strokes for spray stencils; and a 5×7 dot-matrix font for monitors and the LCD panel. Symbols are vector outlines drawn in the same styles, or rasterised onto the dot grid for screens. Dark inks are unlit so the flashlight's hotspot cannot wash them out. The keypad does not require any clue to be found first. `--puzzle-seed N` on the command line fixes a run for testing.
+
+The interface is deliberately minimal. A small crosshair dot is the only permanent element. The detection ring is hidden until a camera sees the player and fades out once the meter drains. Its lower half fills white and its upper half red, matching the red vignette that rises with the alert. Small markers point at the cameras that currently see the player. One line of text under the ring gives context prompts, and a short notice confirms each clue noted. The notebook, keypad and end screen are plain dark overlays. There is no pause menu and no start-up key legend; the notebook lists the controls.
+
+Scene objects use plain names in the hierarchy (`Lockers`, `Desk`, `Freezer`, `Server`, `Server (1)`, `Monitor`, `CCTV`). Simple shapes keep Unity's default primitive names (`Cube`, `Cylinder (2)`), and invisible blockers are `Collider`.
 
 The archive grid runs between two emitter columns with visible ports. Unlocking switches the beams off and leaves the hardware in place.
+
+Every prop sits on a surface or against a wall: monitors stand on desks or hang from the chamber's rail, wall items sit flush (clearing the 8 mm wayfinding stripe), pipes, the cable tray and the duct casing hang on rods, beacons sit on wall brackets, and the archive terminal faces the room.

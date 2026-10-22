@@ -6,7 +6,8 @@ namespace RayOEZoning
 {
     /// <summary>
     /// First-person body: the CC0 Quaternius mannequin blended between idle, walk, sprint and crouch clips from the
-    /// actual stance and controller speed. Head and arms are collapsed so only the torso, legs and feet show.
+    /// actual stance and controller speed. The head and arms are collapsed and the chest is shrunk into the waist, so
+    /// looking down shows the hips, legs and feet without a torso clipping the held flashlight.
     /// </summary>
     [DefaultExecutionOrder(1250)]
     public sealed class PlayerBodyVisual : MonoBehaviour
@@ -16,6 +17,8 @@ namespace RayOEZoning
         public Transform model;
         public AnimationClip idle, walk, sprint, crouchIdle, crouchWalk;
         public Transform[] hiddenBones;
+        public Transform torso;
+        public float torsoScale = .4f;
         public Vector3 standingOffset = new Vector3(0, 0, -.26f);
         public Vector3 crouchedOffset = new Vector3(0, 0, -.36f);
         public Vector3 proneOffset = new Vector3(0, .18f, -1.62f);
@@ -70,6 +73,13 @@ namespace RayOEZoning
                 if (playables != null && playables[4].IsValid()) playables[4].SetSpeed(Mathf.Lerp(.5f, 1f, speed));
                 if (playables != null && playables[2].IsValid()) playables[2].SetSpeed(game.Mode == GameMode.Playing ? 1 : 0);
             }
+            ApplyBoneMask();
+        }
+
+        /// <summary>Re-applies the bone scales after the animation pose is written.</summary>
+        public void ApplyBoneMask()
+        {
+            if (torso) torso.localScale = Vector3.one * torsoScale;
             if (hiddenBones != null)
                 foreach (var bone in hiddenBones) if (bone) bone.localScale = Vector3.one * .0001f;
         }
@@ -96,7 +106,8 @@ namespace RayOEZoning
             if (!model) return;
             Vector3 upright = Vector3.Lerp(standingOffset, crouchedOffset, crouch);
             model.localPosition = Vector3.Lerp(upright, proneOffset, prone);
-            model.localRotation = Quaternion.Euler(90 * prone, 0, 0);
+            // The Quaternius rig faces -Z; turn it to face the view before tipping it forward for prone.
+            model.localRotation = Quaternion.Euler(90 * prone, 0, 0) * Quaternion.Euler(0, 180, 0);
         }
     }
 }

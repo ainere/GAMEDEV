@@ -29,6 +29,7 @@ namespace RayOEZoning
         public HazardDetector[] hazards;
         public HiddenClue[] clues;
         public StealthStance stance;
+        public ClueDirector director;
         public float escapeZ = 27.5f;
         public float exposureSeconds = 1.35f;
         public float decaySeconds = 1.5f;
@@ -46,11 +47,14 @@ namespace RayOEZoning
         public bool Diagnostics { get; private set; }
         public bool CanUseKeypad => Mode == GameMode.Playing && !ExitUnlocked && IsNearKeypad();
         public IReadOnlyList<ClueDefinition> Notes => notesView;
+        /// <summary>This run's code and clues. Falls back to the fixed classic puzzle when nothing has rolled one.</summary>
+        public PuzzleRun Puzzle => puzzle ?? PuzzleCatalog.Classic;
 
         public event System.Action Changed;
 
         private readonly List<ClueDefinition> notes = new List<ClueDefinition>();
         private IReadOnlyList<ClueDefinition> notesView;
+        private PuzzleRun puzzle;
         private PlayerInput playerInput;
         private float noticeRemaining;
         private bool initialized;
@@ -135,8 +139,11 @@ namespace RayOEZoning
                     ToggleNotebook();
                 if (keyboard.eKey.wasPressedThisFrame)
                     TryOpenKeypad();
-                if (keyboard.escapeKey.wasPressedThisFrame)
-                    SetMode(GameMode.Paused);
+            }
+            else if (Mode == GameMode.Won)
+            {
+                if (keyboard.rKey.wasPressedThisFrame)
+                    NewGame();
             }
             else if (Mode == GameMode.Keypad)
             {
@@ -168,6 +175,16 @@ namespace RayOEZoning
             // progress is advanced in Advance so behavior tests and the fixed-step game share a path.
             UpdateClues(0f);
             UpdatePrompt();
+        }
+
+        /// <summary>Installs a freshly rolled puzzle and the clue surfaces that carry it.</summary>
+        public void SetPuzzle(PuzzleRun run, HiddenClue[] active)
+        {
+            puzzle = run;
+            clues = active;
+            notes.Clear();
+            KeypadInput = string.Empty;
+            Changed?.Invoke();
         }
 
         public void SetMode(GameMode mode)
@@ -230,16 +247,16 @@ namespace RayOEZoning
             if (Mode != GameMode.Keypad)
                 return false;
 
-            if (KeypadInput == PuzzleCatalog.Code)
+            if (KeypadInput == Puzzle.code)
             {
                 ExitUnlocked = true;
                 KeypadInput = string.Empty;
-                SetNotice("ARCHIVE SECURITY RELEASED");
+                SetNotice("Archive unlocked");
                 SetMode(GameMode.Playing);
                 return true;
             }
 
-            SetNotice("MAINTENANCE OVERRIDE REJECTED");
+            SetNotice("Wrong code");
             Changed?.Invoke();
             return false;
         }
@@ -280,6 +297,8 @@ namespace RayOEZoning
         public void NewGame()
         {
             notes.Clear();
+            if (director)
+                director.Reroll();
             Retry();
             Changed?.Invoke();
         }
@@ -439,10 +458,10 @@ namespace RayOEZoning
 
         private void RecordClue(int clueIndex)
         {
-            if (clueIndex < 0 || clueIndex >= PuzzleCatalog.Clues.Length)
+            if (clueIndex < 0 || clueIndex >= Puzzle.clues.Length)
                 return;
 
-            ClueDefinition definition = PuzzleCatalog.Clues[clueIndex];
+            ClueDefinition definition = Puzzle.clues[clueIndex];
             for (int i = 0; i < notes.Count; i++)
             {
                 if (notes[i].id == definition.id)
@@ -450,7 +469,7 @@ namespace RayOEZoning
             }
 
             notes.Add(definition);
-            SetNotice("MAINTENANCE STENCIL RECORDED");
+            SetNotice("Noted");
             Changed?.Invoke();
         }
 
@@ -473,26 +492,26 @@ namespace RayOEZoning
                     Transform anchor = clue.anchor != null ? clue.anchor : clue.transform;
                     bool closeEnough = playerCamera != null &&
                         Vector3.Distance(playerCamera.transform.position, anchor.position) <= 3f;
-                    Prompt = !closeEnough ? "Move closer to read the maintenance stencil" :
-                        clue.ReadProgress > 0f ? "Hold steady to transcribe the maintenance stencil" : "Aim the inspection light and hold steady";
+                    Prompt = !closeEnough ? "Move closer to read" :
+                        clue.ReadProgress > 0f ? "Hold steady" : "Hold the light steady to read";
                     return;
                 }
             }
 
             if (!ExitUnlocked && IsNearKeypad())
             {
-                Prompt = "E — Use archive terminal";
+                Prompt = "E  Use terminal";
                 return;
             }
 
             Prompt = string.Empty;
         }
 
-        private bool IsClueRecorded(int clueIndex)
+        public bool IsClueRecorded(int clueIndex)
         {
-            if (clueIndex < 0 || clueIndex >= PuzzleCatalog.Clues.Length)
+            if (clueIndex < 0 || clueIndex >= Puzzle.clues.Length)
                 return false;
-            string id = PuzzleCatalog.Clues[clueIndex].id;
+            string id = Puzzle.clues[clueIndex].id;
             for (int i = 0; i < notes.Count; i++)
             {
                 if (notes[i].id == id)

@@ -42,7 +42,7 @@ namespace RayOEZoning
             if (!game) game = FindAnyObjectByType<StealthGame>();
             if (!detector || !lineMaterial) { enabled = false; return; }
             block = new MaterialPropertyBlock();
-            var surface = new GameObject("Obstruction clipped vision"); surface.layer = gameObject.layer; surface.transform.SetParent(transform, false);
+            var surface = new GameObject("Cone"); surface.layer = gameObject.layer; surface.transform.SetParent(transform, false);
             mesh = new Mesh { name = "Sampled CCTV cone" }; mesh.MarkDynamic();
             surface.AddComponent<MeshFilter>().sharedMesh = mesh;
             beam = surface.AddComponent<MeshRenderer>(); beam.sharedMaterial = lineMaterial;
@@ -51,16 +51,16 @@ namespace RayOEZoning
             var triangles = new List<int>();
             for (int a = 0; a < Around; a++) Triangle(triangles, 0, 1 + a, 1 + (a + 1) % Around);
             mesh.vertices = vertices; mesh.triangles = triangles.ToArray();
-            rim = NewLine("Clipped cone boundary", .018f, true);
-            for (int i = 0; i < spokes.Length; i++) spokes[i] = NewLine("Vision boundary ray", .009f, false);
-            sightRay = NewLine("Actual sampled sight ray", .022f, false);
-            for (int i = 0; i < 14; i++) wires.Add(NewLine("Exact query geometry", .012f, false));
+            rim = NewLine("Line", .018f, true);
+            for (int i = 0; i < spokes.Length; i++) spokes[i] = NewLine("Line", .009f, false);
+            sightRay = NewLine("Line", .022f, false);
+            for (int i = 0; i < 14; i++) wires.Add(NewLine("Line", .012f, false));
             if (shaftMaterial) BuildShaft();
         }
 
         void BuildShaft()
         {
-            var go = new GameObject("Searchlight shaft"); go.layer = gameObject.layer; go.transform.SetParent(transform, false);
+            var go = new GameObject("Shaft"); go.layer = gameObject.layer; go.transform.SetParent(transform, false);
             shaftMesh = new Mesh { name = "Clipped searchlight shaft" }; shaftMesh.MarkDynamic();
             int count = ShaftRays * (ShaftRings + 1);
             shaftVertices = new Vector3[count]; shaftNormals = new Vector3[count]; shaftUV = new Vector2[count];
@@ -81,7 +81,7 @@ namespace RayOEZoning
             shaftRenderer.shadowCastingMode = ShadowCastingMode.Off; shaftRenderer.receiveShadows = false;
             shaftRenderer.lightProbeUsage = LightProbeUsage.Off; shaftRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
             // Always-on outline of the lit floor pool, which is exactly the area this lens covers.
-            var outline = new GameObject("Floor coverage outline"); outline.layer = gameObject.layer; outline.transform.SetParent(transform, false);
+            var outline = new GameObject("Outline"); outline.layer = gameObject.layer; outline.transform.SetParent(transform, false);
             outlineMesh = new Mesh { name = "Floor coverage outline" }; outlineMesh.MarkDynamic();
             outlineVertices = new Vector3[ShaftRays * 4];
             edgePoints = new Vector3[ShaftRays]; edgeNormals = new Vector3[ShaftRays]; edgeOnFloor = new bool[ShaftRays];

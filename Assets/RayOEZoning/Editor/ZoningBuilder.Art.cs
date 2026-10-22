@@ -25,8 +25,11 @@ namespace RayOEZoning.Editor
         static Material screenGraph, screenFeed, screenMolecule, screenWave, signExit, signCold, signLab, signSecure, signCctv, hazardStripe;
         // Player
         static Material glove, sleeve, trousers;
-        // Clues and diagnostics
-        static Material ink, line, shaft;
+        // Clue surfaces and their inks
+        static Material whiteboard, stickyYellow, stickyGlue, labelTape, lcdBacklight, screenOff, clipboardBoard, tape, torchLens;
+        static Material inkBallpoint, inkPencil, inkMarker, inkMarkerRed, inkWhiteboard, inkPaint, inkScreen, inkLcd, inkLabel, inkEngrave, inkPrint;
+        // Diagnostics
+        static Material line, shaft;
         static readonly Dictionary<string, Material> variants = new Dictionary<string, Material>();
 
         static void CreateMaterials()
@@ -66,7 +69,7 @@ namespace RayOEZoning.Editor
             glassTint = Glass("Tinted sash glass", new Color(.35f, .55f, .60f, .28f));
             amberGlass = Glass("Amber reagent glass", new Color(.55f, .28f, .06f, .62f));
             lensGlass = Lit("CCTV lens glass", new Color(.02f, .03f, .05f), .96f, .2f);
-            cameraShell = Lit("CCTV housing", new Color(.88f, .89f, .88f), .62f);
+            cameraShell = Lit("CCTV housing", new Color(.66f, .68f, .69f), .55f);
             cameraDark = Lit("CCTV mount graphite", new Color(.10f, .11f, .12f), .5f, .5f);
             fixtureOff = Lit("Dimmed ceiling panel", new Color(.55f, .58f, .60f), .7f);
             nightPanel = Unlit("Night light panel", new Color(1.1f, 1.0f, .86f));
@@ -90,11 +93,31 @@ namespace RayOEZoning.Editor
             signCctv = Lit("Sign surveillance", Color.white, .3f, 0, SignTexture("Sign surveillance", 4));
             hazardStripe = Lit("Hazard stripe", Color.white, .35f, 0, SignTexture("Hazard stripe", 5));
 
-            glove = Lit("Black tactical glove", new Color(.075f, .08f, .088f), .42f);
+            glove = Lit("Black tactical glove", new Color(.075f, .08f, .088f), .2f);
             sleeve = Lit("Charcoal jacket", new Color(.11f, .125f, .15f), .26f);
             trousers = Lit("Dark work trousers", new Color(.07f, .08f, .095f), .15f);
 
-            ink = Unlit("Inspection ink", new Color(1.15f, 1.35f, 1.1f));
+            whiteboard = Lit("Whiteboard", new Color(.86f, .88f, .88f), .85f);
+            stickyYellow = Lit("Sticky note", new Color(.93f, .78f, .22f), .08f);
+            stickyGlue = Lit("Sticky note glue", new Color(.86f, .7f, .18f), .2f);
+            labelTape = Lit("Label tape", new Color(.025f, .025f, .028f), .12f);
+            lcdBacklight = Unlit("LCD backlight", new Color(.36f, .5f, .24f));
+            screenOff = Lit("Screen off", new Color(.008f, .01f, .012f), .92f);
+            clipboardBoard = Lit("Clipboard", new Color(.34f, .23f, .13f), .3f);
+            tape = Lit("Masking tape", new Color(.78f, .72f, .56f), .2f);
+            torchLens = Unlit("Flashlight lens", new Color(.03f, .03f, .03f));
+            // Dark inks are unlit so the flashlight's hotspot cannot wash them out to grey.
+            inkBallpoint = Unlit("Ink ballpoint", new Color(.02f, .05f, .26f));
+            inkPencil = Unlit("Ink pencil", new Color(.11f, .11f, .12f));
+            inkMarker = Unlit("Ink marker", new Color(.01f, .01f, .012f));
+            inkMarkerRed = Lit("Ink marker red", new Color(.62f, .04f, .04f), 0);
+            inkWhiteboard = Lit("Ink marker blue", new Color(.05f, .12f, .45f), 0);
+            inkPaint = Lit("Ink stencil paint", new Color(.9f, .74f, .16f), 0);
+            inkScreen = Unlit("Ink screen", new Color(.3f, 1.5f, .6f));
+            inkLcd = Unlit("Ink LCD", new Color(.015f, .03f, .015f));
+            inkLabel = Unlit("Ink label", new Color(.85f, .85f, .82f));
+            inkEngrave = Unlit("Ink engraving", new Color(.8f, .83f, .8f));
+            inkPrint = Unlit("Ink print", new Color(.015f, .015f, .02f));
             line = Unlit("Scanning outline", new Color(.82f, .90f, .95f, .22f), true);
             line.SetFloat("_Cull", (float)CullMode.Off);
             shaft = ShaftMaterial();
@@ -126,13 +149,17 @@ namespace RayOEZoning.Editor
             return material;
         }
 
-        static Material Screen(string name, Texture2D emission, float intensity)
+        /// <summary>
+        /// Self-lit screen or sign. Unlit with an HDR tint rather than Lit emission, whose keyword the editor's
+        /// material validation can strip and leave the screen black.
+        /// </summary>
+        static Material Screen(string name, Texture2D image, float intensity)
         {
-            var material = Lit(name, new Color(.02f, .022f, .025f), .85f);
-            material.EnableKeyword("_EMISSION");
-            material.SetTexture("_EmissionMap", emission);
-            material.SetColor("_EmissionColor", Color.white * intensity);
-            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            var material = Asset(name, "Universal Render Pipeline/Unlit");
+            material.SetTexture("_BaseMap", image);
+            material.SetColor("_BaseColor", Color.white * intensity);
+            material.SetFloat("_Surface", 0);
+            material.renderQueue = -1;
             EditorUtility.SetDirty(material);
             return material;
         }
