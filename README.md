@@ -1,4 +1,4 @@
-<h1 align="center">Ray-OE Zoning</h1>
+<h1 align="center">Prototyping 2: Ray-OE Zoning</h1>
 <p align="center"><strong>Elkan Ainer M. La Madrid · 12413739 · GAMEDEV S01</strong><br>De La Salle University · Unity 6000.6.0f1 · Universal Render Pipeline 17.6.0</p>
 
 A first person stealth infiltration of a research laboratory after hours. The lights are off, so the flashlight is your main tool: it shows the way and it is the only thing that reveals the hidden access records. Six CCTV searchlights sweep the rooms. If a camera's light lands on you and the lens can see you, you are being recorded. Find the four code digits and the two order notes, work out the archive code, and reach the protected sample in the vault. The code, its symbols and where the notes are hidden change every run. The game is silent and has no jump scares.
@@ -27,19 +27,19 @@ Add the cloned project folder in Unity Hub and open it with **Unity 6000.6.0f1**
 | F3 | Toggle detection diagnostics (query wireframes, cones and sight rays) |
 | R | Play again after reaching the vault |
 
-There is no pause menu, start-up key legend or notebook. Standing, crouched and prone movement use different speeds and body heights. Standing up is blocked when there is not enough headroom. Jump is disabled. The keypad freezes movement, patrols and alert until closed.
+There is no pause menu or start-up key legend. Standing, crouched and prone movement use different speeds and body heights. Standing up is blocked when there is not enough headroom. Jump is disabled. The keypad freezes movement, patrols and alert until closed.
 
 ## How to play
 
-The laboratory is dark but not pitch black: a few night lights, monitors and status LEDs outline each room, and the flashlight does the rest. Hidden writing appears only where the flashlight's beam falls: sweep the light across a page and the strokes outside the beam stay invisible. The flashlight adjusts its brightness to the distance of what it hits, so close-up paper is not washed out. Nothing is copied for you; remember the digits and order notes, or write them down.
+The laboratory is dark but not pitch black: a few night lights, monitors and status LEDs outline each room, and the flashlight does the rest. Hidden writing appears only where the flashlight's beam falls: sweep the light across a page and the strokes outside the beam stay invisible. The flashlight adjusts its brightness to the distance of what it hits, so close-up paper is not washed out. Nothing is copied for you; remember the digits and order notes.
 
 Each run rolls a new four-digit code from a pool of 16 symbols. Every room hides one **code digit**: a symbol with its name and digit. Two other surfaces carry the **order notes**, short statements such as `KEY RIGHT AFTER MOON` or `STAR IS NOT FIRST`. The two notes together pin down exactly one symbol order; neither does on its own. The writing matches whatever it is on: an engraved wall plaque, ballpoint on a clipboard, pencil on loose paper, marker on a sticky note or whiteboard, green text on a sleeping monitor, an LCD control panel, label-maker tape on a freezer, a spray-painted stencil, or a typed memo. Fourteen surfaces can carry writing, so the hiding places differ between runs.
 
 Each CCTV camera throws a white, hard-edged searchlight that moves with the camera. The lit pool on the floor, traced by a thin outline, is exactly the area that camera covers. Tall equipment casts safe shadows. Behind low benches you must crouch so your head drops out of sight. The searchlight and its outline turn red while it sees you.
 
-The screen shows only a small crosshair until a camera sees you. Then a detection ring fades in around the crosshair. It is a thin, faint circle that fills from the bottom up both sides at once, shading smoothly from white through amber to red (the same red as the soft screen-edge glow) at the top. A small red arrow outside the ring points at the watching camera. When the ring is full, a small **SPOTTED** label appears under it. Once you are out of sight the ring drains and fades away.
+The screen is clear until a camera sees you. Then a detection ring fades in around the centre of the screen. It is a thin, faint circle that fills from the bottom up both sides at once, shading smoothly from white through amber to red (the same red as the soft screen-edge glow) at the top. A small red arrow outside the ring points at the watching camera. When the ring is full, a small **SPOTTED** label appears under it. Once you are out of sight the ring drains and fades away.
 
-Full exposure takes 1.35 seconds; breaking sight drains the meter over 1.5 seconds. Getting caught returns you to the staff entrance and resets the patrols, stance, keypad and archive door, but your notes are kept.
+Full exposure takes 1.35 seconds; breaking sight drains the meter over 1.5 seconds. Getting caught returns you to the staff entrance and resets the patrols, stance, keypad and archive door.
 
 Sort the digits by the order notes and enter them at the archive terminal. A correct code shuts off the laser grid and raises the blast door. Walk into the vault to finish. A known route takes a little over a minute; a first run is comfortably under three.
 
@@ -67,14 +67,8 @@ Each camera first runs its real sphere, box or capsule query against the player'
 
 The Unity Starter Assets first person controller and Input System are used. A regular camera follows the controller's camera target, with no Cinemachine dependency.
 
-## Source and tests
+## Source
 
 - `Assets/RayOEZoning/Runtime/`: stealth state, spatial detection, stance, the per-run puzzle (`PuzzleCatalog`, `ClueDirector`, `ClueSpot`, `ClueWriter`, `Lettering`), interface (`StealthPresentation`), flashlight reveal (`HiddenClue`, `RevealInk` shader) and visuals (searchlight shafts, coverage outline, `PlayerBodyVisual` mannequin body with arm IK, held flashlight).
-- `Assets/RayOEZoning/Editor/`: reproducible level authoring (`ZoningBuilder*.cs`, including generated surface textures and the post-processing profile) and the Windows build command.
 - `Assets/RayOEZoning/Art/`: materials, generated textures and the `LightShaft` shader.
-- `Assets/RayOEZoning/Tests/`: EditMode and PlayMode tests.
-- `Assets/LaserCorridor/`: the original laser corridor level the project started from.
 - `ASSET_CREDITS.md`: asset sources and licenses.
-- `VERIFICATION.md`: what was verified and its limits.
-
-Run tests through Unity's Test Runner. **Ray-OE Zoning → Create level** rebuilds the scene from code and **Ray-OE Zoning → Build Windows** makes a local Windows build. The legacy corridor tests exercise the original source scene, not the stealth level.
