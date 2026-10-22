@@ -1,5 +1,13 @@
 # Ray-OE Zoning verification
 
+## Third pass: mannequin body and quieter alert (2026-10-22)
+
+The Quaternius mannequin is back as the first person body, with its own right hand holding the flashlight through arm IK. The detection ring is thinner and fainter, "DETECTED" became a small "SPOTTED" label, and the red edge glow is softer.
+
+- **EditMode: 79 passed, 0 failed. PlayMode: 11 passed, 0 failed.** The route playback was not re-run; collision, cameras and detection are unchanged.
+- Still renders checked the grip from six sides around the flashlight and in first person at look angles from 60° up to 70° down, standing and crouched. In every view the hand's measured grip point lands exactly on the flashlight's grip (gap 0.000 m). The render tool now draws a baked copy of the skinned mesh, checked to within 2 mm of the finger bones, because without a player loop the skinned mesh drew an earlier pose.
+- A Windows review build ran the HUD poses with no exceptions: the hand is visible holding the flashlight in normal play, and the ring and SPOTTED label show at partial and full alert.
+
 ## Second remodel pass (2026-10-22)
 
 Removed the notebook, reading prompts, zone pictograms and the first person body; added per-pixel flashlight reveal, flashlight auto-exposure, a sprite-based detection ring and a rebuilt glove; fixed z-fighting, beam sheets seen from inside, and a sightline over the supply divider to the spawn.

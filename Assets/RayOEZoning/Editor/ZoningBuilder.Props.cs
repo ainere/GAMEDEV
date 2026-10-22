@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -493,20 +494,26 @@ namespace RayOEZoning.Editor
         }
 
         // ------------------------------------------------------------ held flashlight
-        static Transform HeldFlashlight(Transform camera)
+        /// <summary>Tactical flashlight held in view. The mannequin's right hand is posed onto <paramref name="grip"/>.</summary>
+        static Transform HeldFlashlight(Transform camera, out Transform grip)
         {
-            var hand = Child(camera, "Flashlight"); hand.localPosition = new Vector3(.16f, -.17f, .32f);
+            var hand = Child(camera, "Flashlight"); hand.localPosition = new Vector3(.15f, -.165f, .31f);
             hand.localRotation = Quaternion.Euler(-2, -3, 0);
             var torch = Child(hand, "Torch");
             Cylinder(torch, null, new Vector3(0, 0, -.02f), .0165f, .13f, darkMetal, AlongZ);
-            Cylinder(torch, null, new Vector3(0, 0, -.03f), .0176f, .056f, rubber, AlongZ);
+            Cylinder(torch, null, new Vector3(0, 0, -.022f), .0176f, .09f, rubber, AlongZ);
             Cylinder(torch, null, new Vector3(0, 0, .055f), .019f, .022f, darkMetal, AlongZ);
             Cylinder(torch, null, new Vector3(0, 0, .085f), .024f, .04f, darkMetal, AlongZ);
             Cylinder(torch, null, new Vector3(0, 0, .108f), .0255f, .008f, steel, AlongZ);
             var lens = Cylinder(torch, null, new Vector3(0, 0, .1125f), .0205f, .002f, torchLens, AlongZ);
             Cylinder(torch, null, new Vector3(0, 0, -.093f), .018f, .018f, darkMetal, AlongZ);
             Cylinder(torch, null, new Vector3(0, 0, -.104f), .009f, .006f, rubber, AlongZ);
-            GlovedHand(hand);
+            // The palm sits on the barrel's upper right with the knuckles over the top, angled forward along it;
+            // the thumb side faces the tail. Forward is the knuckle direction, up the thumb side.
+            grip = Child(torch, "Grip"); grip.localPosition = new Vector3(0, 0, -.018f);
+            Vector3 palm = new Vector3(-1, -1, 0).normalized;
+            Vector3 knuckles = (Vector3.Cross(Vector3.back, palm) * Mathf.Cos(30 * Mathf.Deg2Rad) + Vector3.forward * Mathf.Sin(30 * Mathf.Deg2Rad)).normalized;
+            grip.localRotation = Quaternion.LookRotation(knuckles, Vector3.Cross(palm, knuckles));
             var muzzle = Child(hand, "Muzzle"); muzzle.localPosition = new Vector3(0, 0, .12f);
             muzzle.rotation = camera.rotation;
             var visual = hand.gameObject.AddComponent<HeldFlashlightVisual>(); visual.lampGlass = lens.GetComponent<Renderer>(); visual.poseRoot = hand;
@@ -514,38 +521,51 @@ namespace RayOEZoning.Editor
             SetLayer(hand.gameObject, PlayerLayer); return muzzle;
         }
 
-        /// <summary>
-        /// Right hand closed round the grip, seen from the barrel's front: the back of the hand lies along the right,
-        /// four three-joint fingers curl from the knuckles over the top and down the left, and the thumb runs forward
-        /// along the side. Points are (angle round the barrel, distance from its axis, position along it).
-        /// </summary>
-        static void GlovedHand(Transform parent)
+        const string MannequinPath = "Assets/ThirdParty/Quaternius/Universal Animation Library[Standard]/Unity/UAL1_Standard.fbx";
+
+        /// <summary>The CC0 Quaternius mannequin as the player's body; its right hand holds the flashlight.</summary>
+        static void PlayerBody(Transform player, StealthGame game, Transform grip, Transform heldRoot)
         {
-            var hand = Child(parent, "Hand");
-            Vector3 At(float degrees, float radius, float z) =>
-                new Vector3(Mathf.Cos(degrees * Mathf.Deg2Rad) * radius, Mathf.Sin(degrees * Mathf.Deg2Rad) * radius, z);
-            for (int finger = 0; finger < 4; finger++)
+            var body = Child(player, "Body");
+            var visual = body.gameObject.AddComponent<PlayerBodyVisual>(); visual.game = game;
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(MannequinPath), body);
+            PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            // Full size: the mannequin's eyes then sit at the camera's 1.65 m eye height.
+            model.name = "Mannequin";
+            var animator = model.GetComponent<Animator>(); if (!animator) animator = model.AddComponent<Animator>();
+            animator.runtimeAnimatorController = null; animator.applyRootMotion = false; animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            visual.animator = animator; visual.model = model.transform;
+            var clips = AssetDatabase.LoadAllAssetsAtPath(MannequinPath).OfType<AnimationClip>().ToArray();
+            AnimationClip Clip(string name) => clips.First(c => c.name == "Armature|" + name);
+            visual.idle = Clip("Idle_Loop"); visual.walk = Clip("Walk_Loop"); visual.sprint = Clip("Sprint_Loop");
+            visual.crouchIdle = Clip("Crouch_Idle_Loop"); visual.crouchWalk = Clip("Crouch_Fwd_Loop");
+            var bones = new Dictionary<string, Transform>();
+            foreach (var t in model.GetComponentsInChildren<Transform>(true)) if (!bones.ContainsKey(t.name)) bones[t.name] = t;
+            // Straight fingers come from the T-pose; the visual curls them round the grip every frame.
+            Clip("A_TPose").SampleAnimation(model, 0);
+            string[] fingers = { "index", "middle", "ring", "pinky", "thumb" };
+            for (int f = 0; f < fingers.Length; f++)
+                for (int j = 0; j < 3; j++)
+                {
+                    var bone = bones[fingers[f] + "_0" + (j + 1) + "_r"];
+                    visual.fingerJoints[f * 3 + j] = bone; visual.straightRotations[f * 3 + j] = bone.localRotation;
+                }
+            visual.idle.SampleAnimation(model, 0);
+            visual.hiddenBones = new[] { bones["neck_01"] };
+            visual.upperArm = bones["upperarm_r"]; visual.lowerArm = bones["lowerarm_r"]; visual.hand = bones["hand_r"];
+            visual.middleBase = bones["middle_01_r"]; visual.indexBase = bones["index_01_r"]; visual.pinkyBase = bones["pinky_01_r"];
+            visual.middleTip = bones["middle_04_leaf_r"]; visual.thumbTip = bones["thumb_04_leaf_r"];
+            visual.grip = grip; visual.heldRoot = heldRoot;
+            foreach (var skin in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
-                float z = -.006f - finger * .0182f, scale = finger == 3 ? .86f : finger == 0 ? .96f : 1f;
-                Vector3 knuckle = At(32, .035f, z), middle = At(102, .0285f, z - .001f);
-                Vector3 joint = At(168, .0275f, z - .002f), tip = At(finger == 3 ? 212 : 226, .027f, z - .003f);
-                Primitive(hand, null, PrimitiveType.Sphere, knuckle, Vector3.one * .023f * scale, glove, false);
-                Limb(hand, knuckle, middle, .0098f * scale, glove);
-                Limb(hand, middle, joint, .0093f * scale, glove);
-                Limb(hand, joint, tip, .0086f * scale, glove);
+                skin.sharedMaterials = new[] { suit, suitTrim };
+                skin.updateWhenOffscreen = true; skin.shadowCastingMode = ShadowCastingMode.Off;
             }
-            // Back of the hand: a rounded slab from the knuckle line down to the wrist.
-            Vector3 knuckles = At(32, .036f, -.033f), wrist = At(-58, .068f, -.04f);
-            var back = Primitive(hand, null, PrimitiveType.Capsule, (knuckles + wrist) * .5f + new Vector3(.006f, 0, 0),
-                new Vector3(.03f, (wrist - knuckles).magnitude * .62f, .082f), glove, false);
-            back.transform.localRotation = Quaternion.LookRotation(Vector3.forward, knuckles - wrist);
-            Limb(hand, At(-22, .034f, -.004f), At(8, .03f, .03f), .0105f, glove);
-            Primitive(hand, null, PrimitiveType.Sphere, At(-30, .04f, -.012f), new Vector3(.03f, .032f, .036f), glove, false);
-            // Cuff and sleeve run back and down out of view.
-            Vector3 forearm = new Vector3(.14f, -.23f, -.34f), cuff = Vector3.Lerp(wrist, forearm, .12f);
-            Limb(hand, wrist, cuff, .029f, glove);
-            Limb(hand, cuff, Vector3.Lerp(wrist, forearm, .2f), .032f, rubber);
-            Limb(hand, Vector3.Lerp(wrist, forearm, .19f), forearm, .04f, sleeve);
+            SetLayer(body.gameObject, PlayerLayer);
+            visual.ApplyPose(PlayerStance.Standing, false, 0);
+            // The first pass measures the closed hand; the second places the barrel inside it.
+            visual.PoseUpperBody();
+            visual.PoseUpperBody();
         }
 
         // ------------------------------------------------------------ clue surfaces

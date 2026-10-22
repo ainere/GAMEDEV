@@ -21,9 +21,9 @@ namespace RayOEZoning
         static readonly Color White = new Color(.94f, .95f, .95f), Soft = new Color(.94f, .95f, .95f, .6f);
         /// <summary>Shared by the screen-edge vignette and the top of the detection ring.</summary>
         static readonly Color Red = new Color(.8f, .03f, .02f);
-        static readonly Color Amber = new Color(1f, .6f, .2f);
+        static readonly Color Amber = new Color(1f, .68f, .36f);
         static readonly Vector2 Center = new Vector2(.5f, .5f);
-        const float RingSize = 250;
+        const float RingSize = 150;
         RectTransform canvas;
         CanvasGroup ringGroup;
         Image fillLeft, fillRight;
@@ -61,20 +61,22 @@ namespace RayOEZoning
             vignette.sprite = RadialSprite();
             Image(canvas, "Crosshair", Soft, Vector2.zero, new Vector2(4, 4));
 
-            // Translucent ring that fills from the bottom up both sides at once, white through amber to red.
+            // Thin, translucent ring that fills from the bottom up both sides at once, white through amber to red.
             var ringRoot = Box(canvas, "Detection", Vector2.zero, Vector2.one * RingSize);
             ringGroup = ringRoot.gameObject.AddComponent<CanvasGroup>(); ringGroup.alpha = 0;
-            var track = Image(ringRoot, "Track", new Color(1, 1, 1, .2f), Vector2.zero, Vector2.one * RingSize);
+            var track = Image(ringRoot, "Track", new Color(1, 1, 1, .1f), Vector2.zero, Vector2.one * RingSize);
             track.sprite = RingSprite(false);
             fillLeft = RingFill(ringRoot, true);
             fillRight = RingFill(ringRoot, false);
-            detected = Text(ringRoot, "Detected", "DETECTED", 28, Red, Vector2.zero, new Vector2(200, 44), TextAlignmentOptions.Center);
+            // A quiet label under the ring once the cameras have the player.
+            detected = Text(ringRoot, "Spotted", "SPOTTED", 17, new Color(1f, .8f, .77f, .85f), new Vector2(0, -RingSize * .5f - 24), new Vector2(240, 28), TextAlignmentOptions.Center);
+            detected.fontStyle = FontStyles.Normal; detected.characterSpacing = 22;
             Outline(detected);
             int count = game.hazards != null ? game.hazards.Length : 0;
             pips = new RectTransform[count];
             for (int i = 0; i < count; i++)
             {
-                var pip = Image(ringRoot, "Direction", Red, Vector2.zero, new Vector2(16, 16));
+                var pip = Image(ringRoot, "Direction", new Color(Red.r, Red.g, Red.b, .75f), Vector2.zero, new Vector2(11, 11));
                 pip.sprite = ArrowSprite();
                 pips[i] = pip.rectTransform;
             }
@@ -136,17 +138,17 @@ namespace RayOEZoning
                 if (!pips[i].gameObject.activeSelf) continue;
                 Vector3 local = game.playerCamera.transform.InverseTransformPoint(hazard.SightOrigin);
                 float angle = Mathf.Atan2(local.x, local.z);
-                pips[i].anchoredPosition = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * (RingSize * .5f + 14);
+                pips[i].anchoredPosition = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * (RingSize * .5f + 10);
                 pips[i].localEulerAngles = new Vector3(0, 0, -angle * Mathf.Rad2Deg);
             }
             float target = caught || (playing && (seen || game.Alert > .001f)) ? 1 : 0;
             ringAlpha = Mathf.MoveTowards(ringAlpha, target, step * (target > ringAlpha ? 8 : 2.5f));
-            ringGroup.alpha = ringAlpha;
+            ringGroup.alpha = ringAlpha * .9f;
             float fill = caught ? 1 : game.Alert;
             fillLeft.fillAmount = fillRight.fillAmount = fill * .5f;
             detected.gameObject.SetActive(caught);
-            float danger = playing || caught ? Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.2f, 1, game.Alert)) : 0;
-            vignette.color = new Color(Red.r, Red.g, Red.b, danger * (.42f + .14f * Mathf.Sin(now * (5 + 9 * game.Alert))));
+            float danger = playing || caught ? Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.35f, 1, game.Alert)) : 0;
+            vignette.color = new Color(Red.r, Red.g, Red.b, danger * (.2f + .05f * Mathf.Sin(now * (5 + 9 * game.Alert))));
             curtain.color = new Color(0, 0, 0, caught ? Mathf.Clamp01(game.CaughtFade / .65f) * .85f : 0);
 
             prompt.text = playing ? game.Prompt : "";
@@ -163,7 +165,7 @@ namespace RayOEZoning
 
         Image RingFill(RectTransform parent, bool left)
         {
-            var fill = Image(parent, "Fill", new Color(1, 1, 1, .85f), Vector2.zero, Vector2.one * RingSize);
+            var fill = Image(parent, "Fill", new Color(1, 1, 1, .55f), Vector2.zero, Vector2.one * RingSize);
             fill.sprite = RingSprite(true);
             fill.type = UnityEngine.UI.Image.Type.Filled; fill.fillMethod = UnityEngine.UI.Image.FillMethod.Radial360;
             fill.fillOrigin = (int)UnityEngine.UI.Image.Origin360.Bottom;
@@ -179,7 +181,7 @@ namespace RayOEZoning
         {
             if (gradient ? fillSprite : trackSprite) return gradient ? fillSprite : trackSprite;
             const int size = 512;
-            const float outer = size * .5f - 4, thickness = 22;
+            const float outer = size * .5f - 4, thickness = 14;
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = gradient ? "Ring fill" : "Ring track" };
             var pixels = new Color32[size * size];
             for (int y = 0; y < size; y++)

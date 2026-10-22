@@ -8,20 +8,29 @@ namespace RayOEZoning
     {
         public Renderer lampGlass;
         public Transform poseRoot;
+        /// <summary>Added to the rest pose at full upward and full downward look, so the arm can always reach it.</summary>
+        public Vector3 lookUpOffset = new Vector3(-.01f, -.1f, -.06f), lookDownOffset = new Vector3(0, .05f, .1f);
         /// <summary>The torch reaches its full intensity on surfaces this far away.</summary>
         const float FullBrightnessDistance = 6f;
         StealthGame game;
         MaterialPropertyBlock block;
         float maximumIntensity;
-        Vector3 restPosition;
+        Vector3 restPosition, current;
         float gait;
         void Start()
         {
             game = FindAnyObjectByType<StealthGame>(); block = new MaterialPropertyBlock();
             maximumIntensity = game && game.torch ? game.torch.intensity : 28f;
             if (!poseRoot) poseRoot = transform;
-            restPosition = poseRoot.localPosition;
+            restPosition = current = poseRoot.localPosition;
         }
+        float LookPitch()
+        {
+            if (!game || !game.playerCamera || !game.body) return 0;
+            Transform view = game.playerCamera.transform;
+            return Mathf.Clamp(Vector3.SignedAngle(game.body.transform.forward, view.forward, view.right), -80, 80);
+        }
+
         void LateUpdate()
         {
             if (!lampGlass || block == null) return;
@@ -35,7 +44,12 @@ namespace RayOEZoning
                 bool prone = game.stance && game.stance.CurrentStance == PlayerStance.Prone;
                 var offset = new Vector3(Mathf.Sin(gait) * .005f * movement,
                     Mathf.Cos(gait * 2) * .004f * movement - (sprinting ? .035f : 0), prone ? .025f : 0);
-                poseRoot.localPosition = Vector3.Lerp(poseRoot.localPosition, restPosition + offset, Time.deltaTime * 14);
+                // Held lower and closer while looking up, further out while looking down past the chest.
+                float pitch = LookPitch() / 80f;
+                offset += pitch < 0 ? lookUpOffset * -pitch : lookDownOffset * pitch;
+                // Smoothed separately from the transform: the body's arm IK may nudge the root after this runs.
+                current = Application.isPlaying ? Vector3.Lerp(current, restPosition + offset, Time.deltaTime * 14) : restPosition + offset;
+                poseRoot.localPosition = current;
             }
             // Auto-exposure: scale with distance squared so whatever the beam lands on is lit about as brightly at
             // arm's length as at 6 m, and paper close up never washes out to white.

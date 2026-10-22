@@ -24,7 +24,7 @@ namespace RayOEZoning.Editor
         // Screens and signs
         static Material screenGraph, screenFeed, screenMolecule, screenWave, signExit, signCctv, hazardStripe;
         // Player
-        static Material glove, sleeve, trousers;
+        static Material suit, suitTrim;
         // Clue surfaces and their inks
         static Material whiteboard, stickyYellow, stickyGlue, labelTape, lcdBacklight, screenOff, clipboardBoard, tape, torchLens;
         static Material inkBallpoint, inkPencil, inkMarker, inkMarkerRed, inkWhiteboard, inkPaint, inkScreen, inkLcd, inkLabel, inkEngrave, inkPrint;
@@ -90,9 +90,8 @@ namespace RayOEZoning.Editor
             signCctv = Lit("Sign surveillance", Color.white, .3f, 0, SignTexture("Sign surveillance", 4));
             hazardStripe = Lit("Hazard stripe", Color.white, .35f, 0, SignTexture("Hazard stripe", 5));
 
-            glove = Lit("Black tactical glove", new Color(.075f, .08f, .088f), .2f);
-            sleeve = Lit("Charcoal jacket", new Color(.11f, .125f, .15f), .26f);
-            trousers = Lit("Dark work trousers", new Color(.07f, .08f, .095f), .15f);
+            suit = Lit("Mannequin suit", new Color(.15f, .16f, .18f), .25f);
+            suitTrim = Lit("Mannequin joints", new Color(.075f, .08f, .09f), .3f);
 
             whiteboard = Lit("Whiteboard", new Color(.86f, .88f, .88f), .85f);
             stickyYellow = Lit("Sticky note", new Color(.93f, .78f, .22f), .08f);

@@ -37,7 +37,7 @@ Each run rolls a new four-digit code from a pool of 16 symbols. Every room hides
 
 Each CCTV camera throws a white, hard-edged searchlight that moves with the camera. The lit pool on the floor, traced by a thin outline, is exactly the area that camera covers. Tall equipment casts safe shadows. Behind low benches you must crouch so your head drops out of sight. The searchlight and its outline turn red while it sees you.
 
-The screen shows only a small crosshair until a camera sees you. Then a detection ring fades in around the crosshair. It is a translucent circle that fills from the bottom up both sides at once, shading smoothly from white through amber to red (the same red as the screen-edge vignette) at the top. A small red arrow outside the ring points at the watching camera. A full ring shows **DETECTED**. Once you are out of sight the ring drains and fades away.
+The screen shows only a small crosshair until a camera sees you. Then a detection ring fades in around the crosshair. It is a thin, faint circle that fills from the bottom up both sides at once, shading smoothly from white through amber to red (the same red as the soft screen-edge glow) at the top. A small red arrow outside the ring points at the watching camera. When the ring is full, a small **SPOTTED** label appears under it. Once you are out of sight the ring drains and fades away.
 
 Full exposure takes 1.35 seconds; breaking sight drains the meter over 1.5 seconds. Getting caught returns you to the staff entrance and resets the patrols, stance, keypad and archive door, but your notes are kept.
 
@@ -69,7 +69,7 @@ The Unity Starter Assets first person controller and Input System are used. A re
 
 ## Source and tests
 
-- `Assets/RayOEZoning/Runtime/`: stealth state, spatial detection, stance, the per-run puzzle (`PuzzleCatalog`, `ClueDirector`, `ClueSpot`, `ClueWriter`, `Lettering`), interface (`StealthPresentation`), flashlight reveal (`HiddenClue`, `RevealInk` shader) and visuals (searchlight shafts, coverage outline, held flashlight and hand).
+- `Assets/RayOEZoning/Runtime/`: stealth state, spatial detection, stance, the per-run puzzle (`PuzzleCatalog`, `ClueDirector`, `ClueSpot`, `ClueWriter`, `Lettering`), interface (`StealthPresentation`), flashlight reveal (`HiddenClue`, `RevealInk` shader) and visuals (searchlight shafts, coverage outline, `PlayerBodyVisual` mannequin body with arm IK, held flashlight).
 - `Assets/RayOEZoning/Editor/`: reproducible level authoring (`ZoningBuilder*.cs`, including generated surface textures and the post-processing profile) and the Windows build command.
 - `Assets/RayOEZoning/Art/`: materials, generated textures and the `LightShaft` shader.
 - `Assets/RayOEZoning/Tests/`: EditMode and PlayMode tests.

@@ -541,7 +541,7 @@ namespace RayOEZoning.Editor
             camera.allowHDR = true; camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.01f, .012f, .015f);
             var cameraData = cameraGo.AddComponent<UniversalAdditionalCameraData>(); cameraData.renderPostProcessing = true;
             cameraData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing; cameraData.antialiasingQuality = AntialiasingQuality.High;
-            var muzzle = HeldFlashlight(cameraGo.transform);
+            var muzzle = HeldFlashlight(cameraGo.transform, out var grip);
             // Faint fill that only touches the player's own hand and torch, so they read as more than a silhouette.
             var fill = Child(cameraGo.transform, "Point Light"); fill.localPosition = new Vector3(.02f, .06f, .12f);
             var handFill = fill.gameObject.AddComponent<Light>(); handFill.type = LightType.Point; handFill.range = .9f; handFill.intensity = .35f;
@@ -552,6 +552,7 @@ namespace RayOEZoning.Editor
             torch.color = new Color(1f, .93f, .80f); torch.shadows = LightShadows.Soft; torch.shadowBias = .015f; torch.shadowNormalBias = .06f; torch.shadowNearPlane = .03f;
             game.controller = controller; game.inputs = inputs; game.body = body; game.playerCamera = camera; game.torch = torch; game.torchOrigin = muzzle;
             var stance = player.AddComponent<StealthStance>(); stance.game = game; stance.controller = controller; stance.body = body; stance.cameraRoot = target; stance.obstructionMask = Obstructions; game.stance = stance;
+            PlayerBody(player.transform, game, grip, muzzle.parent);
         }
 
         static GameObject Limb(Transform parent, Vector3 a, Vector3 b, float radius, Material material)
