@@ -1,7 +1,0 @@
-{
-  "name": "RayOEZoning.Editor",
-  "rootNamespace": "RayOEZoning.Editor",
-  "references": ["RayOEZoning.Runtime", "Unity.StarterAssets", "Unity.InputSystem", "Unity.ugui", "Unity.TextMeshPro", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
-  "includePlatforms": ["Editor"],
-  "autoReferenced": true
-}

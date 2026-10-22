@@ -1,6 +1,0 @@
-{
-  "name": "RayOEZoning.PlayModeTests",
-  "references": ["RayOEZoning.Runtime", "Unity.StarterAssets", "Unity.InputSystem"],
-  "optionalUnityReferences": ["TestAssemblies"],
-  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
-}
