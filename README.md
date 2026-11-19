@@ -43,6 +43,7 @@ Outputs       = Refer to branches for specific outputs
 | **Gameplay: Laser Room** | `laser-room` | Unity laser-corridor survival scene, scripts and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/laser-room) |
 | **Gameplay: Knockdown** | `knockdown` | Unity carnival game with hinged duck targets, three conveyor rows, Static and Moving modes, and FPS mouse aiming | [View Output →](https://github.com/ainere/GAMEDEV/tree/knockdown) |
 | **Prototyping 2: Ray-OE zoning** | `ray-oe-zoning` | Unity stealth game with raycast and detection mechanics | [View Output →](https://github.com/ainere/GAMEDEV/tree/ray-oe-zoning) |
+| **Particles: Super Sentai Transform!** | `particles-super-sentai-transform` | Unity particle VFX showcases: a Super Sentai team transformation, elemental bending and a final boss aura, with a demo video | [View Output →](https://github.com/ainere/GAMEDEV/tree/particles-super-sentai-transform) |
 ---
 
 <div align="center">
