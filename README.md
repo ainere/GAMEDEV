@@ -8,6 +8,8 @@ Three particle effect showcases built with Unity's built-in Particle System (Shu
 | Elemental Bending | One bender performs water, earth, fire and air techniques in a courtyard at dusk, then bows. |
 | Final Boss | An armoured figure on a throne in a dark hall wakes up and powers up a layered aura, seen from a low camera. |
 
+Demo video: [Demo/Particles-VFX-demo.mp4](Demo/Particles-VFX-demo.mp4)
+
 ## Open and play
 
 1. Open this project in Unity **6000.6.0f1**.
