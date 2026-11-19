@@ -1,52 +1,41 @@
-<div align="center">
+# Particles: Super Sentai Transform!
 
-# GAMEDEV — Course Submissions
+Three particle effect showcases built with Unity's built-in Particle System (Shuriken) in URP, each staged with posable characters that move in time with the effects.
 
-[![Course](https://img.shields.io/badge/Course-GAMEDEV%20S01-007ACC?style=flat-square&logo=visual-studio-code&logoColor=white)](https://github.com/ainere/GAMEDEV)
-&nbsp;
-[![Student](https://img.shields.io/badge/Student-Elkan%20Ainer%20M.%20La%20Madrid-107C41?style=flat-square)](https://github.com/ainere)
-&nbsp;
-[![ID](https://img.shields.io/badge/ID-12413739-blueviolet?style=flat-square)](https://github.com/ainere)
-&nbsp;
+| Scene | What happens |
+| :--- | :--- |
+| Super Sentai Transform | Five rangers call their transformation, spiral into their suits and strike team poses in front of a five-colour explosion. |
+| Elemental Bending | One bender performs water, earth, fire and air techniques in a courtyard at dusk, then bows. |
+| Final Boss | An armoured figure on a throne in a dark hall wakes up and powers up a layered aura, seen from a low camera. |
 
-<p>Individual academic submission hub for <strong>GAMEDEV S01</strong>.</p>
+## Open and play
 
-</div>
+1. Open this project in Unity **6000.6.0f1**.
+2. Open any scene in `Assets/SentaiTransform/Scenes`, `Assets/ElementalBending/Scenes` or `Assets/FinalBoss/Scenes`.
+3. Enter Play mode. Each sequence starts immediately and replays automatically.
 
----
+| Key | Action |
+| :--- | :--- |
+| 1 or Space | Restart the sequence |
+| L | Toggle automatic replay |
+| R | Reset the rangers to civilian clothes (Super Sentai only) |
+| Tab | Next scene (F1, F2, F3 jump to a scene) |
+| H | Hide or show the hotkey help (for recording) |
 
-<h2 align="center"><img src="https://raw.githubusercontent.com/ainere/ainere/main/assets/icons/user.svg" width="20" height="20" align="absmiddle" /> submission manifest.ini</h2>
+## How it is built
 
-```ini
-[Submission_Manifest]
-Course        = GAMEDEV (Game Development)
-Section       = S01
-Student       = Elkan Ainer M. La Madrid
-ID_Number     = 12413739
-Institution   = De La Salle University
-Repository    = ainere/GAMEDEV
-ActiveBranch  = main (Directory)
-Outputs       = Refer to branches for specific outputs
-```
+The characters are stylized, posable figures: an 18-joint skeleton with shaped parts on each joint, dressed as a ranger (with a civilian outfit and a suit), a bender or an armoured boss. Poses are written in choreography terms, such as "raise the right arm 90 degrees forward and bend the elbow 40 degrees", and each scene has a timeline of poses that the effects are timed against.
 
----
+Every effect is a standard Particle System in its scene, so its settings can be inspected and adjusted in the Inspector.
 
-<h2 align="center"><img src="https://raw.githubusercontent.com/ainere/ainere/main/assets/icons/projects.svg" width="20" height="20" align="absmiddle" /> outputs & branch directory</h2>
+## Project contents
 
-> [!NOTE]
-> **Branch Navigation**: Each course deliverable and project milestone is isolated on its own dedicated branch. Refer to the directory below to view specific outputs, Unity scenes, and project assets.
+- [Characters](Assets/Characters/Scripts): skeleton, pose system, pose playback and outfit swapping.
+- [Showcase](Assets/Showcase): the scene switcher and HUD toggle, plus the generated meshes and materials the scenes use.
+- [Super Sentai](Assets/SentaiTransform), [Elemental Bending](Assets/ElementalBending) and [Final Boss](Assets/FinalBoss): each has its scene, its choreography and a controller that runs the sequence.
 
-| Output / Topic | Target Branch | Description | Link |
-| :--- | :--- | :--- | :--- |
-| **Prototyping 1: Go Go Gummi!** | `gummi-ship` | Unity Gummi Ship project files and materials | [View Output →](https://github.com/ainere/GAMEDEV/tree/gummi-ship) |
-| **Gameplay: Traversal** | `traversal` | Unity Traversal project files and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/traversal) |
-| **Gameplay: Laser Room** | `laser-room` | Unity laser-corridor survival scene, scripts and assets | [View Output →](https://github.com/ainere/GAMEDEV/tree/laser-room) |
-| **Gameplay: Knockdown** | `knockdown` | Unity carnival game with hinged duck targets, three conveyor rows, Static and Moving modes, and FPS mouse aiming | [View Output →](https://github.com/ainere/GAMEDEV/tree/knockdown) |
-| **Prototyping 2: Ray-OE zoning** | `ray-oe-zoning` | Unity stealth game with raycast and detection mechanics | [View Output →](https://github.com/ainere/GAMEDEV/tree/ray-oe-zoning) |
----
+## Assets
 
-<div align="center">
+Particle textures come from Kenney's Particle Pack and Brackeys' VFX Bundle (flipbooks), both CC0. See [ASSET_CREDITS.md](ASSET_CREDITS.md). Everything else, including the characters, sets, materials and effects, was made for this project.
 
-<sub><code>GAMEDEV S01 • De La Salle University • Academic Submission Repository</code></sub>
-
-</div>
+Find the other course submissions in the [GAMEDEV directory](https://github.com/ainere/GAMEDEV/tree/main).
